@@ -1,0 +1,185 @@
+version: '3.8'
+
+services:
+  # Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: setaradapps
+      POSTGRES_USER: setaradapps
+      POSTGRES_PASSWORD: setaradapps123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - setaradapps-network
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - setaradapps-network
+
+  # Web App
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://setaradapps:setaradapps123@postgres:5432/setaradapps
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - setaradapps-network
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://setaradapps:setaradapps123@postgres:5432/setaradapps
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-super-secret-jwt-key
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - setaradapps-network
+    volumes:
+      - ./services/auth-service:/app
+      - /app/node_modules
+
+  # Chat Service
+  chat-service:
+    build:
+      context: ./services/chat-service
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3002:3002"
+    environment:
+      - DATABASE_URL=postgresql://setaradapps:setaradapps123@postgres:5432/setaradapps
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - setaradapps-network
+    volumes:
+      - ./services/chat-service:/app
+      - /app/node_modules
+
+  # Marketplace Service
+  marketplace-service:
+    build:
+      context: ./services/marketplace-service
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3003:3003"
+    environment:
+      - DATABASE_URL=postgresql://setaradapps:setaradapps123@postgres:5432/setaradapps
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - setaradapps-network
+    volumes:
+      - ./services/marketplace-service:/app
+      - /app/node_modules
+
+  # Wallet Service
+  wallet-service:
+    build:
+      context: ./services/wallet-service
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3004:3004"
+    environment:
+      - DATABASE_URL=postgresql://setaradapps:setaradapps123@postgres:5432/setaradapps
+      - REDIS_URL=redis://redis:6379
+      - ETHEREUM_RPC_URL=https://mainnet.infura.io/v3/your-project-id
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - setaradapps-network
+    volumes:
+      - ./services/wallet-service:/app
+      - /app/node_modules
+
+  # AI Service
+  ai-service:
+    build:
+      context: ./services/ai-service
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3005:3005"
+    environment:
+      - OPENAI_API_KEY=your-openai-api-key
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - setaradapps-network
+    volumes:
+      - ./services/ai-service:/app
+      - /app/node_modules
+
+  # IoT Service
+  iot-service:
+    build:
+      context: ./services/iot-service
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3006:3006"
+    environment:
+      - DATABASE_URL=postgresql://setaradapps:setaradapps123@postgres:5432/setaradapps
+      - REDIS_URL=redis://redis:6379
+      - MQTT_BROKER_URL=mqtt://mqtt-broker:1883
+    depends_on:
+      - postgres
+      - redis
+      - mqtt-broker
+    networks:
+      - setaradapps-network
+    volumes:
+      - ./services/iot-service:/app
+      - /app/node_modules
+
+  # MQTT Broker for IoT
+  mqtt-broker:
+    image: eclipse-mosquitto:2.0
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mqtt_data:/mosquitto/data
+      - mqtt_logs:/mosquitto/log
+    networks:
+      - setaradapps-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  mqtt_data:
+  mqtt_logs:
+
+networks:
+  setaradapps-network:
+    driver: bridge 

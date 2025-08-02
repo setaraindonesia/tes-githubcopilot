@@ -1,0 +1,45 @@
+{
+  "name": "setaradapps",
+  "version": "1.0.0",
+  "description": "Aplikasi Super Terdesentralisasi - Chat, Marketplace, DeFi, IoT",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "services/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "db:migrate": "cd services/auth-service && npm run migrate",
+    "db:seed": "cd services/auth-service && npm run seed"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0",
+    "turbo": "^1.10.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "decentralized",
+    "chat",
+    "marketplace",
+    "defi",
+    "iot",
+    "blockchain",
+    "ai"
+  ],
+  "author": "Setaradapps Team",
+  "license": "MIT"
+}
