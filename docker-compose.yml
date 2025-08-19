@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 services:
   # Database
@@ -159,6 +159,45 @@ services:
       - setaradapps-network
     volumes:
       - ./services/iot-service:/app
+      - /app/node_modules
+
+  # Delivery Service
+  delivery-service:
+    build:
+      context: ./services/delivery-service
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3007:3007"
+    environment:
+      - DATABASE_URL=postgresql://setaradapps:setaradapps123@postgres:5432/setaradapps
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - setaradapps-network
+    volumes:
+      - ./services/delivery-service:/app
+      - /app/node_modules
+
+  # Payment Service
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3008:3008"
+    environment:
+      - DATABASE_URL=postgresql://setaradapps:setaradapps123@postgres:5432/setaradapps
+      - REDIS_URL=redis://redis:6379
+      - STRIPE_SECRET_KEY=your-stripe-secret-key
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - setaradapps-network
+    volumes:
+      - ./services/payment-service:/app
       - /app/node_modules
 
   # MQTT Broker for IoT

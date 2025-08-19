@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "env": {
+    "NEXT_PUBLIC_THIRDWEB_CLIENT_ID": "@thirdweb_client_id",
+    "NEXT_PUBLIC_TREASURY_ADDRESS": "@treasury_address"
+  }
+}
+
