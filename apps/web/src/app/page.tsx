@@ -47,8 +47,16 @@ const HomePage: FC = () => {
               </Button>
             </div>
             
+            {/* Preview Status */}
+            <div className="mt-8 p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <p className="text-sm text-purple-800 text-center mb-2">
+                🚀 <strong>Preview Mode:</strong> This is a preview deployment from develop branch! 
+                Test features safely before production.
+              </p>
+            </div>
+            
             {/* PWA Install Demo */}
-            <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <p className="text-sm text-blue-800 text-center mb-2">
                 📱 <strong>Install as App:</strong> Android users will see install prompt automatically. 
                 iPhone users: tap Share → "Add to Home Screen"
