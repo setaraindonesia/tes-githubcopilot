@@ -48,12 +48,12 @@ const HomePage: FC = () => {
             </div>
             
             {/* Preview Status */}
-            <div className="mt-8 p-4 bg-purple-50 rounded-lg border border-purple-200">
-              <p className="text-sm text-purple-800 text-center mb-2">
-                🚀 <strong>Preview Mode:</strong> This is a preview deployment from develop branch! 
-                Test features safely before production. (Updated)
-              </p>
-            </div>
+                             <div className="mt-8 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                   <p className="text-sm text-purple-800 text-center mb-2">
+                     🚀 <strong>Preview Mode:</strong> This is a preview deployment from develop branch! 
+                     Test features safely before production. (Footer Updated)
+                   </p>
+                 </div>
             
             {/* PWA Install Demo */}
             <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
