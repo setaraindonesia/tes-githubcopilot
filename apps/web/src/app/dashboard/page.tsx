@@ -24,6 +24,7 @@ const Dashboard: FC = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Semua')
   const [walletTab, setWalletTab] = useState<'web2' | 'web3'>('web2')
+  const [walletView, setWalletView] = useState<'overview' | 'p2p' | 'defi'>('overview')
   const [vehicleType, setVehicleType] = useState<'motor' | 'mobil' | 'pickup'>('motor')
   const [isVehicleOpen, setIsVehicleOpen] = useState(false)
   const [isFabOpen, setIsFabOpen] = useState(false)
@@ -688,219 +689,137 @@ const Dashboard: FC = () => {
           </div>
         )}
 
-        {/* DeFi Tab Content */}
-        {activeBottomTab === 'defi' && (
-          <div>
-            {/* Hero Section */}
-            <div className="bg-white border-b p-6">
-              <h2 className="text-2xl font-bold mb-2 text-gray-900">DeFi Web3</h2>
-              <p className="text-gray-600 mb-4">Investasi masa depan dengan teknologi blockchain</p>
-              <button className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
-                Connect Wallet
-              </button>
-            </div>
+        
 
-            <div className="p-4 space-y-6">
-              {/* Stats Cards */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="bg-white rounded-lg shadow-sm border p-4 text-center">
-                  <div className="text-2xl font-bold text-indigo-600">$2.5M</div>
-                  <div className="text-xs text-gray-600">TVL</div>
-                </div>
-                <div className="bg-white rounded-lg shadow-sm border p-4 text-center">
-                  <div className="text-2xl font-bold text-indigo-600">15%</div>
-                  <div className="text-xs text-gray-600">APY Rata-rata</div>
-                </div>
-                <div className="bg-white rounded-lg shadow-sm border p-4 text-center">
-                  <div className="text-2xl font-bold text-indigo-600">12</div>
-                  <div className="text-xs text-gray-600">Projects</div>
-                </div>
-              </div>
-
-              {/* RWA Projects */}
-              <div className="bg-white rounded-lg shadow-sm border p-4">
-                <h3 className="font-semibold text-gray-900 mb-4">Real World Assets (RWA)</h3>
-                
-                <div className="space-y-3">
-                  {rwaProjects.map((project) => (
-                    <div key={project.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <project.icon className={`w-6 h-6 text-indigo-600`} />
-                          <div>
-                            <div className="font-semibold text-gray-900">{project.name}</div>
-                            <div className="text-sm text-gray-600">Min. Investment: {project.investment}</div>
-                          </div>
-                        </div>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          project.status === 'Active' 
-                            ? 'bg-indigo-100 text-indigo-700' 
-                            : 'bg-gray-100 text-gray-700'
-                        }`}>
-                          {project.status}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4 mb-3">
-                        <div>
-                          <div className="text-sm text-gray-600">APY</div>
-                          <div className="font-semibold text-indigo-600">{project.apy}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-gray-600">Risk Level</div>
-                          <div className={`font-semibold text-gray-600`}>
-                            {project.risk}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <button 
-                        className={`w-full py-2 rounded-lg font-medium transition-colors ${
-                          project.status === 'Active'
-                            ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                            : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        }`}
-                        disabled={project.status !== 'Active'}
-                      >
-                        {project.status === 'Active' ? 'Invest Now' : 'Coming Soon'}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Security Section */}
-              <div className="bg-white rounded-lg shadow-sm border p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <ShieldCheck className="w-6 h-6 text-indigo-600" />
-                  <h3 className="font-semibold text-gray-900">Keamanan Terjamin</h3>
-                </div>
-                <p className="text-sm text-gray-600 mb-4">
-                  Semua investasi dijamin melalui smart contract yang telah diaudit dan teknologi blockchain yang transparan.
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
-                    <span className="text-xs text-gray-600">Smart Contract Audited</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
-                    <span className="text-xs text-gray-600">Blockchain Security</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
-                    <span className="text-xs text-gray-600">Insurance Coverage</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
-                    <span className="text-xs text-gray-600">Regulatory Compliance</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+        
+        
+        {/* SERA (Assistant) Tab Content */}
+        {activeBottomTab === 'sera' && (
+          <div className="p-4 space-y-4">
+            <h2 className="text-xl font-bold text-gray-900">SERA – Setara Assistant</h2>
+            <p className="text-gray-600">Tanya SERA untuk bantuan cepat seputar Setaradapps.</p>
           </div>
         )}
 
-        {/* P2P Exchange Tab Content */}
-        {activeBottomTab === 'p2p' && (
-          <div className="pb-20">
-            <div className="bg-white shadow-sm border-b sticky top-0 z-50">
-              <div className="flex justify-between items-center px-4 py-4">
-                <h1 className="text-2xl font-bold text-indigo-600">P2P Exchange</h1>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <ArrowLeftRight className="w-4 h-4 text-indigo-500" />
-                  <span>Fiat ↔ SETARA</span>
-                </div>
-              </div>
-            </div>
-
-                          <div className="p-4">
-                <P2PComplete />
-              </div>
-          </div>
-        )}
-
-        {/* Wallet Tab Content */}
+        {/* Wallet Tab Content with P2P & DeFi sub-views */}
         {activeBottomTab === 'wallet' && (
           <div className="p-4 space-y-6">
-            {/* Balance Tabs */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="flex border-b border-gray-100">
-                <button
-                  onClick={() => setWalletTab('web2')}
-                  className={`flex-1 py-3 text-center font-medium transition-colors ${
-                    walletTab === 'web2' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'
-                  }`}
-                >
-                  Fiat Balance
+                <button onClick={() => setWalletView('overview')} className={`flex-1 py-3 text-center font-medium transition-colors ${walletView === 'overview' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}>Overview</button>
+                <button onClick={() => setWalletView('p2p')} className={`flex-1 py-3 text-center font-medium transition-colors ${walletView === 'p2p' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}>
+                  <span className="inline-flex items-center gap-2"><ArrowLeftRight className="w-4 h-4" /> P2P</span>
                 </button>
-                <button
-                  onClick={() => setWalletTab('web3')}
-                  className={`flex-1 py-3 text-center font-medium transition-colors ${
-                    walletTab === 'web3' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'
-                  }`}
-                >
-                  Crypto Balance
+                <button onClick={() => setWalletView('defi')} className={`flex-1 py-3 text-center font-medium transition-colors ${walletView === 'defi' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}>
+                  <span className="inline-flex items-center gap-2"><Coins className="w-4 h-4" /> DeFi</span>
                 </button>
               </div>
 
               <div className="p-4">
-                {walletTab === 'web2' && (
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-gray-900">Rp 2.450.000</div>
-                      <div className="text-sm text-gray-600">Total Saldo Fiat</div>
+                {walletView === 'overview' && (
+                  <div className="space-y-6">
+                    <div className="bg-white rounded-lg shadow-sm border">
+                      <div className="flex border-b border-gray-100">
+                        <button onClick={() => setWalletTab('web2')} className={`flex-1 py-3 text-center font-medium transition-colors ${walletTab === 'web2' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}>Fiat Balance</button>
+                        <button onClick={() => setWalletTab('web3')} className={`flex-1 py-3 text-center font-medium transition-colors ${walletTab === 'web3' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}>Crypto Balance</button>
+                      </div>
+                      <div className="p-4">
+                        {walletTab === 'web2' && (
+                          <div className="space-y-4">
+                            <div className="text-center">
+                              <div className="text-3xl font-bold text-gray-900">Rp 2.450.000</div>
+                              <div className="text-sm text-gray-600">Total Saldo Fiat</div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="bg-gray-50 rounded-lg p-3 text-center">
+                                <div className="text-lg font-semibold text-gray-900">Rp 1.200.000</div>
+                                <div className="text-xs text-gray-600">Saldo Utama</div>
+                              </div>
+                              <div className="bg-gray-50 rounded-lg p-3 text-center">
+                                <div className="text-lg font-semibold text-gray-900">Rp 1.250.000</div>
+                                <div className="text-xs text-gray-600">Tabungan</div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        {walletTab === 'web3' && (
+                          <div className="space-y-4">
+                            <div className="text-center"><SimpleWalletConnect /></div>
+                            <WalletBalance />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-gray-50 rounded-lg p-3 text-center">
-                        <div className="text-lg font-semibold text-gray-900">Rp 1.200.000</div>
-                        <div className="text-xs text-gray-600">Saldo Utama</div>
-                      </div>
-                      <div className="bg-gray-50 rounded-lg p-3 text-center">
-                        <div className="text-lg font-semibold text-gray-900">Rp 1.250.000</div>
-                        <div className="text-xs text-gray-600">Tabungan</div>
-                      </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <button className="bg-white rounded-lg shadow-sm border p-4 text-center hover:bg-gray-50 transition-colors">
+                        <Send className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                        <div className="font-medium text-gray-900">Send</div>
+                        <div className="text-xs text-gray-600">Transfer uang</div>
+                      </button>
+                      <button className="bg-white rounded-lg shadow-sm border p-4 text-center hover:bg-gray-50 transition-colors">
+                        <ArrowUpRight className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                        <div className="font-medium text-gray-900">Receive</div>
+                        <div className="text-xs text-gray-600">Terima uang</div>
+                      </button>
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow-sm border p-4 text-center">
+                      <h3 className="font-semibold text-gray-900 mb-4">QR Code Saya</h3>
+                      <div className="w-32 h-32 mx-auto bg-gray-900 rounded-lg mb-4 flex items-center justify-center text-white text-xs">QR CODE</div>
+                      <p className="text-sm text-gray-600">Scan untuk transfer ke akun saya</p>
                     </div>
                   </div>
                 )}
 
-                {walletTab === 'web3' && (
-                  <div className="space-y-4">
-                    {/* Wallet Connection Section */}
-                    <div className="text-center">
-                      <SimpleWalletConnect />
+                {walletView === 'p2p' && (
+                  <div className="pb-20">
+                    <div className="bg-white shadow-sm border-b sticky top-0 z-40">
+                      <div className="flex justify-between items-center px-4 py-4">
+                        <h1 className="text-xl font-bold text-indigo-600">P2P Exchange</h1>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <ArrowLeftRight className="w-4 h-4 text-indigo-500" />
+                          <span>Fiat ↔ SETARA</span>
+                        </div>
+                      </div>
                     </div>
-                    
-                    {/* Token Balances */}
-                    <WalletBalance />
+                    <div className="p-4"><P2PComplete /></div>
+                  </div>
+                )}
+
+                {walletView === 'defi' && (
+                  <div className="space-y-6">
+                    <div className="bg-white border-b p-6">
+                      <h2 className="text-xl font-bold mb-2 text-gray-900">DeFi Web3</h2>
+                      <p className="text-gray-600 mb-4">Investasi masa depan dengan teknologi blockchain</p>
+                      <button className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">Connect Wallet</button>
+                    </div>
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="bg-white rounded-lg shadow-sm border p-4 text-center"><div className="text-2xl font-bold text-indigo-600">$2.5M</div><div className="text-xs text-gray-600">TVL</div></div>
+                        <div className="bg-white rounded-lg shadow-sm border p-4 text-center"><div className="text-2xl font-bold text-indigo-600">15%</div><div className="text-xs text-gray-600">APY Rata-rata</div></div>
+                        <div className="bg-white rounded-lg shadow-sm border p-4 text-center"><div className="text-2xl font-bold text-indigo-600">12</div><div className="text-xs text-gray-600">Projects</div></div>
+                      </div>
+                      <div className="bg-white rounded-lg shadow-sm border p-4">
+                        <h3 className="font-semibold text-gray-900 mb-4">Real World Assets (RWA)</h3>
+                        <div className="space-y-3">
+                          {rwaProjects.map((project) => (
+                            <div key={project.id} className="border border-gray-200 rounded-lg p-4">
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex items-center gap-3"><project.icon className="w-6 h-6 text-indigo-600" /><div><div className="font-semibold text-gray-900">{project.name}</div><div className="text-sm text-gray-600">Min. Investment: {project.investment}</div></div></div>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${project.status === 'Active' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-700'}`}>{project.status}</span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-4 mb-3"><div><div className="text-sm text-gray-600">APY</div><div className="font-semibold text-indigo-600">{project.apy}</div></div><div><div className="text-sm text-gray-600">Risk Level</div><div className="font-semibold text-gray-600">{project.risk}</div></div></div>
+                              <button className={`w-full py-2 rounded-lg font-medium transition-colors ${project.status === 'Active' ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`} disabled={project.status !== 'Active'}>{project.status === 'Active' ? 'Invest Now' : 'Coming Soon'}</button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg shadow-sm border p-4"><div className="flex items-center gap-3 mb-3"><ShieldCheck className="w-6 h-6 text-indigo-600" /><h3 className="font-semibold text-gray-900">Keamanan Terjamin</h3></div><p className="text-sm text-gray-600">Semua investasi dijamin melalui smart contract yang telah diaudit dan teknologi blockchain yang transparan.</p></div>
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-4">
-              <button className="bg-white rounded-lg shadow-sm border p-4 text-center hover:bg-gray-50 transition-colors">
-                <Send className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-                <div className="font-medium text-gray-900">Send</div>
-                <div className="text-xs text-gray-600">Transfer uang</div>
-              </button>
-              
-              <button className="bg-white rounded-lg shadow-sm border p-4 text-center hover:bg-gray-50 transition-colors">
-                <ArrowUpRight className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                <div className="font-medium text-gray-900">Receive</div>
-                <div className="text-xs text-gray-600">Terima uang</div>
-              </button>
-            </div>
-
-            {/* QR Code */}
-            <div className="bg-white rounded-lg shadow-sm border p-4 text-center">
-              <h3 className="font-semibold text-gray-900 mb-4">QR Code Saya</h3>
-              <div className="w-32 h-32 mx-auto bg-gray-900 rounded-lg mb-4 flex items-center justify-center text-white text-xs">
-                QR CODE
-              </div>
-              <p className="text-sm text-gray-600">Scan untuk transfer ke akun saya</p>
             </div>
           </div>
         )}
@@ -912,9 +831,8 @@ const Dashboard: FC = () => {
           {[
             { id: 'home', icon: HomeIcon, label: 'Home' },
             { id: 'market', icon: ShoppingBag, label: 'Market' },
+            { id: 'sera', icon: Cpu, label: 'SERA' },
             { id: 'driver', icon: CarIcon, label: 'Driver' },
-            { id: 'p2p', icon: ArrowLeftRight, label: 'P2P' },
-            { id: 'defi', icon: Coins, label: 'DeFi' },
             { id: 'wallet', icon: WalletIcon, label: 'Wallet' },
           ].map((tab) => (
             <button
