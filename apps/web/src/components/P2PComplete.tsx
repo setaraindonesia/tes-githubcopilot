@@ -541,21 +541,21 @@ const P2PComplete: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 px-2 sm:px-0">
       {/* Simple Header with Balance */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 sm:p-6 border border-blue-200">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">P2P SETARA Exchange</h1>
-          <p className="text-gray-600">Trade SETARA directly with other users - Fast, Safe, Simple</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">P2P SETARA Exchange</h1>
+          <p className="text-sm sm:text-base text-gray-600">Trade SETARA directly with other users - Fast, Safe, Simple</p>
           
           {address && (
             <div className="mt-4">
-              <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-lg border">
-                <Wallet className="w-5 h-5 text-indigo-600" />
+              <div className="inline-flex items-center gap-2 bg-white px-3 sm:px-4 py-2 rounded-lg border text-sm sm:text-base">
+                <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
                 <span className="font-semibold text-gray-900">
                   {setaraBalance.toFixed(4)} SETARA
                 </span>
-                <span className="text-sm text-gray-500">Available</span>
+                <span className="text-xs sm:text-sm text-gray-500">Available</span>
               </div>
             </div>
           )}
@@ -567,7 +567,7 @@ const P2PComplete: React.FC = () => {
         <div className="flex border-b">
           <button
             onClick={() => setActiveTab('BUY')}
-            className={`flex-1 px-6 py-4 text-center font-medium transition-colors ${
+            className={`flex-1 px-3 sm:px-6 py-3 sm:py-4 text-center font-medium transition-colors text-sm sm:text-base ${
               activeTab === 'BUY'
                 ? 'bg-green-50 text-green-700 border-b-2 border-green-500'
                 : 'text-gray-600 hover:bg-gray-50'
@@ -577,7 +577,7 @@ const P2PComplete: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('SELL')}
-            className={`flex-1 px-6 py-4 text-center font-medium transition-colors ${
+            className={`flex-1 px-3 sm:px-6 py-3 sm:py-4 text-center font-medium transition-colors text-sm sm:text-base ${
               activeTab === 'SELL'
                 ? 'bg-red-50 text-red-700 border-b-2 border-red-500'
                 : 'text-gray-600 hover:bg-gray-50'
@@ -588,7 +588,7 @@ const P2PComplete: React.FC = () => {
         </div>
 
         {/* Simple Controls */}
-        <div className="p-4 border-b bg-gray-50">
+        <div className="p-3 sm:p-4 border-b bg-gray-50">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <input
@@ -596,14 +596,14 @@ const P2PComplete: React.FC = () => {
                 placeholder="Search traders..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
               />
             </div>
             
             <select
               value={selectedCurrency}
               onChange={(e) => setSelectedCurrency(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full sm:w-auto px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
             >
               <option value="IDR">IDR</option>
               <option value="USD">USD</option>
@@ -620,31 +620,31 @@ const P2PComplete: React.FC = () => {
             </div>
           ) : (
             filteredUsers.map((user) => (
-              <div key={user.id} className="p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between">
+              <div key={user.id} className="p-3 sm:p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   {/* User Info */}
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="relative flex-shrink-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-base sm:text-lg">
                         {user.name.charAt(0)}
                       </div>
-                      <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
+                      <div className={`absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-white ${
                         user.online ? 'bg-green-500' : 'bg-gray-400'
                       }`} />
                     </div>
                     
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-gray-900">{user.name}</span>
-                        {user.isVerified && <Shield className="w-4 h-4 text-blue-500" />}
-                        <span className={`text-xs px-2 py-1 rounded-full ${
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="font-medium text-gray-900 text-sm sm:text-base truncate">{user.name}</span>
+                        {user.isVerified && <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />}
+                        <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${
                           user.online ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
                         }`}>
                           {user.online ? 'Online' : user.lastSeen}
                         </span>
                       </div>
                       
-                      <div className="flex items-center gap-3 text-sm text-gray-600">
+                      <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600 flex-wrap">
                         <div className="flex items-center gap-1">
                           <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                           <span>{user.rating}</span>
@@ -658,21 +658,21 @@ const P2PComplete: React.FC = () => {
                   </div>
 
                   {/* Trade Info */}
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-gray-900 mb-1">
+                  <div className="text-left sm:text-right flex-shrink-0">
+                    <div className="text-base sm:text-lg font-bold text-gray-900 mb-1">
                       {formatCurrency(user.rate, user.currency)}
                     </div>
-                    <div className="text-sm text-gray-600 mb-2">per SETARA</div>
+                    <div className="text-xs sm:text-sm text-gray-600 mb-2">per SETARA</div>
                     
                     <div className="text-xs text-gray-500 mb-3">
                       Limits: {formatCurrency(user.limits.min, user.currency)} - {formatCurrency(user.limits.max, user.currency)}
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <button
                         onClick={() => handleTradeClick(user)}
                         disabled={activeTab === 'SELL' && setaraBalance === 0}
-                        className={`px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                        className={`px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base ${
                           activeTab === 'BUY'
                             ? 'bg-green-600 hover:bg-green-700 text-white'
                             : 'bg-red-600 hover:bg-red-700 text-white'
@@ -689,10 +689,10 @@ const P2PComplete: React.FC = () => {
                             setTradeAmount(setaraBalance.toString())
                             setShowTradeModal(true)
                           }}
-                          className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-colors flex items-center gap-1"
+                          className="px-3 sm:px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-1 text-sm sm:text-base"
                           title="Sell all balance"
                         >
-                          <Zap className="w-4 h-4" />
+                          <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
                           All
                         </button>
                       )}
@@ -702,15 +702,15 @@ const P2PComplete: React.FC = () => {
 
                 {/* Payment Methods */}
                 <div className="mt-3 flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Payment:</span>
-                  <div className="flex gap-2 flex-wrap">
+                  <span className="text-xs sm:text-sm text-gray-600">Payment:</span>
+                  <div className="flex gap-1 sm:gap-2 flex-wrap">
                     {user.paymentMethods.slice(0, 3).map((method, idx) => (
-                      <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                      <span key={idx} className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
                         {method}
                       </span>
                     ))}
                     {user.paymentMethods.length > 3 && (
-                      <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                      <span className="px-2 sm:px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
                         +{user.paymentMethods.length - 3}
                       </span>
                     )}

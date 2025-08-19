@@ -51,7 +51,7 @@ const HomePage: FC = () => {
             <div className="mt-8 p-4 bg-purple-50 rounded-lg border border-purple-200">
               <p className="text-sm text-purple-800 text-center mb-2">
                 🚀 <strong>Preview Mode:</strong> This is a preview deployment from develop branch! 
-                Test features safely before production.
+                Test features safely before production. (Updated)
               </p>
             </div>
             
