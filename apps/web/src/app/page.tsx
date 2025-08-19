@@ -47,11 +47,11 @@ const HomePage: FC = () => {
               </Button>
             </div>
             
-            {/* Development Status */}
-            <div className="mt-8 p-4 bg-green-50 rounded-lg border border-green-200">
-              <p className="text-sm text-green-800 text-center mb-2">
-                🛡️ <strong>Branch Protection Active:</strong> Safe development workflow enabled! 
-                All changes now require Pull Request approval.
+            {/* Preview Status */}
+            <div className="mt-8 p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <p className="text-sm text-purple-800 text-center mb-2">
+                🚀 <strong>Preview Mode:</strong> This is a preview deployment from develop branch! 
+                Test features safely before production.
               </p>
             </div>
             
