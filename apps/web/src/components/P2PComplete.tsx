@@ -20,8 +20,9 @@ import {
   Wallet,
   Zap
 } from 'lucide-react'
-import { useAddress, useBalance, useContract, useContractRead } from "@thirdweb-dev/react"
-import { THIRDWEB_CONFIG } from '@/config/thirdweb'
+// Temporarily disable ThirdWeb imports to prevent crashes
+// import { useAddress, useBalance, useContract, useContractRead } from "@thirdweb-dev/react"
+// import { THIRDWEB_CONFIG } from '@/config/thirdweb'
 
 interface P2PUser {
   id: string
@@ -132,11 +133,10 @@ const P2PComplete: React.FC = () => {
   const [chatMessage, setChatMessage] = useState<string>('')
   const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null)
 
-  // Wallet integration
-  const address = useAddress()
-  const { data: ethBalance } = useBalance()
-  const { contract: tokenContract } = useContract(THIRDWEB_CONFIG.TOKEN.address)
-  const { data: tokenBalance } = useContractRead(tokenContract, "balanceOf", [address])
+  // Mock wallet integration (temporarily disabled ThirdWeb)
+  const address = "0x1234...5678" // Mock address
+  const ethBalance = { displayValue: "0.5", symbol: "ETH" } // Mock ETH balance
+  const tokenBalance = "1000000000000000000000" // Mock token balance (1000 SETARA)
 
   // Get SETARA balance in readable format
   const getSetaraBalance = () => {
@@ -543,7 +543,7 @@ const P2PComplete: React.FC = () => {
   return (
     <div className="space-y-4 px-2 sm:px-0">
       {/* Simple Header with Balance */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 sm:p-6 border border-blue-200">
+      <div className="bg-gray-50 rounded-lg p-4 sm:p-6 border border-gray-200">
         <div className="text-center">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">P2P SETARA Exchange</h1>
           <p className="text-sm sm:text-base text-gray-600">Trade SETARA directly with other users - Fast, Safe, Simple</p>
@@ -748,7 +748,7 @@ const P2PComplete: React.FC = () => {
                     onChange={(e) => setTradeAmount(e.target.value)}
                     placeholder="Enter amount"
                     step="0.0001"
-                    className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                   <button
                     type="button"
@@ -784,7 +784,7 @@ const P2PComplete: React.FC = () => {
                 <select
                   value={selectedPayment}
                   onChange={(e) => setSelectedPayment(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">Select payment method</option>
                   {selectedUser.paymentMethods.map((method, idx) => (
@@ -815,7 +815,7 @@ const P2PComplete: React.FC = () => {
                 <button
                   onClick={handleCreateTrade}
                   disabled={isTradeDisabled}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Start Trade
                 </button>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Chat Test - Debug</title>
+    <script src="https://cdn.socket.io/4.7.0/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .status { font-weight: bold; margin: 10px 0; }
+        .connected { color: green; }
+        .disconnected { color: red; }
+        .logs { 
+            height: 300px; 
+            overflow-y: auto; 
+            border: 1px solid #ddd; 
+            padding: 10px; 
+            margin: 10px 0;
+            background-color: #f9f9f9;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        button { padding: 10px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Simple Chat Service Connection Test</h1>
+        
+        <div class="status" id="status">❌ Disconnected</div>
+        
+        <button onclick="connectWithoutAuth()">Test Connection (No Auth)</button>
+        <button onclick="connectWithNamespace()">Test with /chat namespace</button>
+        <button onclick="connectWithAuth()">Test with Mock Auth</button>
+        <button onclick="disconnect()">Disconnect</button>
+        
+        <h3>Connection Logs:</h3>
+        <div class="logs" id="logs"></div>
+        
+        <h3>Debug Info:</h3>
+        <div id="debug">
+            <p><strong>Chat Service URL:</strong> http://localhost:3002</p>
+            <p><strong>Expected WebSocket:</strong> ws://localhost:3002/socket.io/</p>
+            <p><strong>Expected Namespace:</strong> /chat (if configured)</p>
+        </div>
+    </div>
+
+    <script>
+        let socket;
+        let logCount = 0;
+
+        function log(message, type = 'info') {
+            logCount++;
+            const logsDiv = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            
+            logsDiv.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        function updateStatus(text, connected) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = text;
+            statusDiv.className = connected ? 'status connected' : 'status disconnected';
+        }
+
+        function connectWithoutAuth() {
+            disconnect();
+            log('🔌 Attempting connection without authentication...', 'info');
+            
+            socket = io('http://localhost:3002', {
+                transports: ['websocket', 'polling']
+            });
+            
+            setupSocketEvents('No Auth');
+        }
+
+        function connectWithNamespace() {
+            disconnect();
+            log('🔌 Attempting connection to /chat namespace...', 'info');
+            
+            socket = io('http://localhost:3002/chat', {
+                transports: ['websocket', 'polling']
+            });
+            
+            setupSocketEvents('With Namespace');
+        }
+
+        function connectWithAuth() {
+            disconnect();
+            log('🔌 Attempting connection with mock auth token...', 'info');
+            
+            socket = io('http://localhost:3002/chat', {
+                auth: {
+                    token: 'test_token_123'
+                },
+                transports: ['websocket', 'polling']
+            });
+            
+            setupSocketEvents('With Auth');
+        }
+
+        function setupSocketEvents(connectionType) {
+            socket.on('connect', () => {
+                log(`✅ Connected successfully! (${connectionType})`, 'success');
+                log(`Socket ID: ${socket.id}`, 'info');
+                updateStatus('✅ Connected', true);
+            });
+
+            socket.on('disconnect', (reason) => {
+                log(`❌ Disconnected: ${reason}`, 'error');
+                updateStatus('❌ Disconnected', false);
+            });
+
+            socket.on('connect_error', (error) => {
+                log(`❌ Connection Error: ${error.message}`, 'error');
+                log(`Error details: ${JSON.stringify(error)}`, 'error');
+                updateStatus('❌ Connection Failed', false);
+            });
+
+            socket.on('authenticated', (data) => {
+                log(`🔐 Authenticated: ${JSON.stringify(data)}`, 'success');
+            });
+
+            socket.on('error', (error) => {
+                log(`⚠️ Socket Error: ${JSON.stringify(error)}`, 'error');
+            });
+
+            // Listen for any event
+            socket.onAny((eventName, ...args) => {
+                log(`📡 Event received: ${eventName} - ${JSON.stringify(args)}`, 'info');
+            });
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+                log('🔌 Disconnected manually', 'info');
+                updateStatus('❌ Disconnected', false);
+            }
+        }
+
+        // Test HTTP endpoint first
+        fetch('http://localhost:3002')
+            .then(response => {
+                log(`✅ HTTP Test: Chat service responding on port 3002 (Status: ${response.status})`, 'success');
+            })
+            .catch(error => {
+                log(`❌ HTTP Test Failed: ${error.message}`, 'error');
+            });
+    </script>
+</body>
+</html>
+

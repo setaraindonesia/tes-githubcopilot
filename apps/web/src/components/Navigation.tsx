@@ -12,7 +12,7 @@ const Navigation = () => {
           {/* Logo */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <h1 className="text-2xl font-bold text-indigo-600">Setaradapps</h1>
+              <h1 className="text-2xl font-bold" style={{ color: '#0066FF' }}>Setaradapps</h1>
             </div>
           </div>
 
@@ -22,15 +22,15 @@ const Navigation = () => {
               <a href="#features" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Features
               </a>
-              <button
-                onClick={() => {
-                  localStorage.setItem('auth', 'true');
-                  window.location.href = '/dashboard';
-                }}
-                className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer"
-              >
-                User Dashboard
-              </button>
+              <a href="/login" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                Login
+              </a>
+              <a href="/register" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                Daftar
+              </a>
+              <a href="/test-auth" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                Test Auth
+              </a>
               <a href="/mobile-preview" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Mobile Preview
               </a>

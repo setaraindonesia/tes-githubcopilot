@@ -1,3 +1,5 @@
+const path = require('path')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -6,10 +8,20 @@ const nextConfig = {
   experimental: {
     esmExternals: 'loose',
   },
-  output: 'standalone',
   trailingSlash: false,
   swcMinify: true,
-  webpack: (config, { isServer }) => {
+  compiler: {
+    styledComponents: false,
+  },
+  generateBuildId: async () => {
+    return 'build-' + Date.now()
+  },
+  webpack: (config, { isServer, dev }) => {
+    // Disable filesystem cache completely on Windows to avoid corruption
+    config.cache = false
+
+    // Keep default module resolution; avoid hard aliasing react
+
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -20,6 +32,9 @@ const nextConfig = {
     }
     return config;
   },
+  transpilePackages: [
+    '@thirdweb-dev/react'
+  ],
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
     NEXT_PUBLIC_CHAT_SERVICE_URL: process.env.NEXT_PUBLIC_CHAT_SERVICE_URL || 'http://localhost:3002',

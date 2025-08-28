@@ -21,6 +21,8 @@ model User {
   avatar    String?
   isActive  Boolean  @default(true)
   isVerified Boolean @default(false)
+  emailVerified Boolean @default(false)
+  emailVerificationToken String?
   role      UserRole @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -32,6 +34,7 @@ model User {
   orders     Order[]
   messages   Message[]
   conversations ConversationParticipant[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -190,4 +193,31 @@ enum MessageType {
   FILE
   AUDIO
   VIDEO
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  content   String
+  emailSent Boolean  @default(false)
+  sentAt    DateTime?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  CHAT_MESSAGE
+  ORDER_UPDATE
+  PAYMENT_RECEIVED
+  WALLET_ACTIVITY
+  MARKETPLACE_UPDATE
+  SYSTEM_ANNOUNCEMENT
+  EMAIL_VERIFICATION
 }

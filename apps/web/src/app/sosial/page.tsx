@@ -1,4 +1,6 @@
 'use client'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 import { useMemo, useState } from 'react'
 import { Heart, MessageCircle, Repeat2, Image as ImageIcon, Send } from 'lucide-react'

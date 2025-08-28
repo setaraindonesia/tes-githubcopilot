@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { 
   Search, 
   Filter, 
@@ -16,16 +16,31 @@ import {
 import { P2POrder, P2POrderFilter } from '@/types/p2p'
 import { mockP2POrders, mockP2PMarketStats } from '@/data/p2pMockData'
 
-const P2POrderBook: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'BUY' | 'SELL'>('BUY')
-  const [selectedCurrency, setSelectedCurrency] = useState<string>('IDR')
+type P2POrderBookProps = {
+  activeTab?: 'BUY' | 'SELL'
+  onChangeActiveTab?: (tab: 'BUY' | 'SELL') => void
+  selectedCurrency?: string
+  onChangeCurrency?: (currency: string) => void
+  showHeader?: boolean
+}
+
+const P2POrderBook: React.FC<P2POrderBookProps> = ({
+  activeTab: activeTabProp,
+  onChangeActiveTab,
+  selectedCurrency: selectedCurrencyProp,
+  onChangeCurrency,
+  showHeader = true,
+}) => {
+  const [internalActiveTab, setInternalActiveTab] = useState<'BUY' | 'SELL'>('BUY')
+  const activeTab = activeTabProp ?? internalActiveTab
+
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [showFilters, setShowFilters] = useState<boolean>(false)
   const [selectedOrder, setSelectedOrder] = useState<P2POrder | null>(null)
   
   const [filters, setFilters] = useState<P2POrderFilter>({
     type: undefined,
-    fiatCurrency: 'IDR',
+    fiatCurrency: selectedCurrencyProp || 'IDR',
     paymentMethod: undefined,
     minAmount: undefined,
     maxAmount: undefined,
@@ -33,6 +48,45 @@ const P2POrderBook: React.FC = () => {
     sortBy: 'PRICE',
     sortOrder: 'ASC'
   })
+
+  const selectedCurrency = selectedCurrencyProp ?? filters.fiatCurrency
+  const [showCurrencyMenu, setShowCurrencyMenu] = useState(false)
+  const currencyRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!showCurrencyMenu) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (currencyRef.current && !currencyRef.current.contains(e.target as Node)) {
+        setShowCurrencyMenu(false)
+      }
+    }
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowCurrencyMenu(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [showCurrencyMenu])
+
+  const handleSetActiveTab = (tab: 'BUY' | 'SELL') => {
+    if (onChangeActiveTab) onChangeActiveTab(tab)
+    else setInternalActiveTab(tab)
+  }
+
+  const handleSetCurrency = (currency: string) => {
+    if (onChangeCurrency) onChangeCurrency(currency)
+    else setFilters({ ...filters, fiatCurrency: currency })
+  }
+
+  // Sync currency filter when parent prop changes
+  useEffect(() => {
+    if (selectedCurrencyProp && selectedCurrencyProp !== filters.fiatCurrency) {
+      setFilters(prev => ({ ...prev, fiatCurrency: selectedCurrencyProp }))
+    }
+  }, [selectedCurrencyProp])
 
   // Filter orders based on active tab and filters
   const filteredOrders = mockP2POrders.filter(order => {
@@ -83,93 +137,102 @@ const P2POrderBook: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Market Stats Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900">P2P SETARA Exchange</h2>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <TrendingUp className="w-4 h-4 text-green-500" />
-            <span>24h Volume: {currentStats.totalVolume24h.toLocaleString()} SETARA</span>
+      {showHeader && (
+        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-900">P2P SETARA Exchange</h2>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <TrendingUp className="w-4 h-4 text-green-500" />
+              <span>24h Volume: {currentStats.totalVolume24h.toLocaleString()} SETARA</span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="text-sm text-gray-600">IDR Rate</div>
+              <div className="font-bold text-lg">{formatRate(currentStats.averagePrice.IDR, 'IDR')}</div>
+              <div className="text-xs text-green-600">+{currentStats.priceChange24h.IDR}%</div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm text-gray-600">USD Rate</div>
+              <div className="font-bold text-lg">{formatRate(currentStats.averagePrice.USD, 'USD')}</div>
+              <div className="text-xs text-green-600">+{currentStats.priceChange24h.USD}%</div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm text-gray-600">24h Trades</div>
+              <div className="font-bold text-lg">{currentStats.totalTrades24h}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm text-gray-600">Active Orders</div>
+              <div className="font-bold text-lg">{filteredOrders.length}</div>
+            </div>
           </div>
         </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center">
-            <div className="text-sm text-gray-600">IDR Rate</div>
-            <div className="font-bold text-lg">{formatRate(currentStats.averagePrice.IDR, 'IDR')}</div>
-            <div className="text-xs text-green-600">+{currentStats.priceChange24h.IDR}%</div>
-          </div>
-          <div className="text-center">
-            <div className="text-sm text-gray-600">USD Rate</div>
-            <div className="font-bold text-lg">{formatRate(currentStats.averagePrice.USD, 'USD')}</div>
-            <div className="text-xs text-green-600">+{currentStats.priceChange24h.USD}%</div>
-          </div>
-          <div className="text-center">
-            <div className="text-sm text-gray-600">24h Trades</div>
-            <div className="font-bold text-lg">{currentStats.totalTrades24h}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-sm text-gray-600">Active Orders</div>
-            <div className="font-bold text-lg">{filteredOrders.length}</div>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Tabs and Controls */}
       <div className="bg-white rounded-lg shadow-sm border">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border-b">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 border-b">
           <div className="flex space-x-1 mb-3 sm:mb-0">
             <button
-              onClick={() => setActiveTab('BUY')}
-              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+              onClick={() => handleSetActiveTab('BUY')}
+              className={`px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-medium transition-colors ${
                 activeTab === 'BUY'
-                  ? 'bg-green-100 text-green-700 border border-green-300'
+                  ? 'bg-teal-100 text-teal-700 border border-teal-300'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              Buy SETARA
+              Beli
             </button>
             <button
-              onClick={() => setActiveTab('SELL')}
-              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+              onClick={() => handleSetActiveTab('SELL')}
+              className={`px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-medium transition-colors ${
                 activeTab === 'SELL'
                   ? 'bg-red-100 text-red-700 border border-red-300'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              Sell SETARA
+              Jual
             </button>
           </div>
           
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search traders..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+            <div className="relative" ref={currencyRef}>
+              <button
+                onClick={() => setShowCurrencyMenu((v) => !v)}
+                className="px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 flex items-center gap-2"
+              >
+                <span>{selectedCurrency}</span>
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              {showCurrencyMenu && (
+                <div className="absolute left-0 sm:right-0 sm:left-auto mt-1 min-w-[7rem] max-w-[12rem] bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                  {['IDR','USD'].map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => { handleSetCurrency(c); setShowCurrencyMenu(false) }}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${selectedCurrency === c ? 'text-indigo-600 font-medium' : 'text-gray-700'}`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            
-            <select
-              value={selectedCurrency}
-              onChange={(e) => setSelectedCurrency(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="IDR">IDR</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="SGD">SGD</option>
-            </select>
-            
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2"
-            >
-              <Filter className="w-4 h-4" />
-              Filters
+            <button className="px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 flex items-center gap-2">
+              Limit <ChevronDown className="w-4 h-4" />
             </button>
+            <button className="px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 flex items-center gap-2">
+              Metode <ChevronDown className="w-4 h-4" />
+            </button>
+            <div className="hidden sm:flex items-center gap-2 text-sm text-gray-600">
+              <span>Merchant</span>
+              <label className="inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" />
+                <div className="w-10 h-6 bg-gray-200 rounded-full peer peer-checked:bg-indigo-600 transition-colors"></div>
+                <div className="-ml-8 w-5 h-5 bg-white rounded-full shadow transform peer-checked:translate-x-5 transition-transform"></div>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -228,90 +291,70 @@ const P2POrderBook: React.FC = () => {
               <div className="text-sm">Try adjusting your filters or search terms</div>
             </div>
           ) : (
-            filteredOrders.map((order) => (
-              <div key={order.id} className="p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  {/* Trader Info */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                      {order.username.charAt(0)}
+            filteredOrders.map((order) => {
+              const availableToken = order.exchangeRate ? (order.maxAmount / order.exchangeRate) : order.maxAmount
+              return (
+                <div key={order.id} className="p-3 sm:p-4 hover:bg-gray-50 transition-colors">
+                  {/* Top Row: Merchant + Stats */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-semibold">
+                        {order.username.charAt(0)}
+                      </div>
+                      <div className="font-medium text-gray-900">{order.username}</div>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900">{order.username}</span>
-                        {order.userRating >= 4.5 && <Shield className="w-4 h-4 text-green-500" />}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                          <span>{order.userRating}</span>
-                        </div>
-                        <span>•</span>
-                        <span>{order.totalTrades} trades</span>
-                      </div>
+                    <div className="text-right text-gray-500 text-sm">
+                      <div>{order.totalTrades} Order (30H) | {Math.round((order.userRating/5)*100)}%</div>
+                      <div className="text-gray-500">Online</div>
                     </div>
                   </div>
 
-                  {/* Order Details */}
-                  <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8">
-                    {/* Price & Amount */}
-                    <div className="text-center lg:text-left">
-                      <div className="text-lg font-bold text-gray-900">
-                        {formatRate(order.exchangeRate, order.fiatCurrency)}
-                      </div>
-                      <div className="text-sm text-gray-600">per SETARA</div>
+                  {/* Price + CTA */}
+                  <div className="mt-2 flex items-center justify-between">
+                    <div>
+                      <div className="text-2xl font-bold text-gray-900">{formatRate(order.exchangeRate, order.fiatCurrency)}</div>
                     </div>
-
-                    {/* Limits */}
-                    <div className="text-center lg:text-left">
-                      <div className="text-sm text-gray-600">Limits</div>
-                      <div className="font-medium text-gray-900">
-                        {formatCurrency(order.minAmount, order.fiatCurrency)} - {formatCurrency(order.maxAmount, order.fiatCurrency)}
-                      </div>
-                    </div>
-
-                    {/* Payment Methods */}
-                    <div className="text-center lg:text-left">
-                      <div className="text-sm text-gray-600 mb-1">Payment</div>
-                      <div className="flex flex-wrap gap-1">
-                        {order.paymentMethods.slice(0, 2).map((method, idx) => (
-                          <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-                            <span>{getPaymentMethodIcon(method.type)}</span>
-                            <span>{method.name}</span>
-                          </span>
-                        ))}
-                        {order.paymentMethods.length > 2 && (
-                          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                            +{order.paymentMethods.length - 2}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Action Button */}
                     <button
                       onClick={() => handleTradeClick(order)}
-                      className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                        activeTab === 'BUY'
-                          ? 'bg-green-600 hover:bg-green-700 text-white'
-                          : 'bg-red-600 hover:bg-red-700 text-white'
+                      className={`px-5 py-2 rounded-full font-medium transition-colors ${
+                        activeTab === 'BUY' ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
                       }`}
                     >
-                      {activeTab === 'BUY' ? 'Buy' : 'Sell'}
+                      {activeTab === 'BUY' ? 'Beli' : 'Jual'}
                     </button>
                   </div>
-                </div>
 
-                {/* Terms */}
-                {order.terms && (
-                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="text-sm text-yellow-800">
-                      <strong>Terms:</strong> {order.terms}
+                  {/* Amount & Limit */}
+                  <div className="mt-2 grid grid-cols-2 gap-4">
+                    <div className="text-sm text-gray-600">
+                      Jumlah <span className="block font-medium text-gray-900">{availableToken.toLocaleString()} USDT</span>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Limit <span className="block font-medium text-gray-900">{formatCurrency(order.minAmount, order.fiatCurrency)} - {formatCurrency(order.maxAmount, order.fiatCurrency)}</span>
                     </div>
                   </div>
-                )}
-              </div>
-            ))
+
+                  {/* Payment methods */}
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {order.paymentMethods.slice(0, 8).map((method, idx) => (
+                      <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                        <span>{getPaymentMethodIcon(method.type)}</span>
+                        <span>{method.name}</span>
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Terms */}
+                  {order.terms && (
+                    <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="text-sm text-yellow-800">
+                        <strong>Terms:</strong> {order.terms}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })
           )}
         </div>
       </div>

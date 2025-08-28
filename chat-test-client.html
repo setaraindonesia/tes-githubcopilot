@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Test Client</title>
+    <script src="https://cdn.socket.io/4.7.0/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .user-section { 
+            border: 1px solid #ccc; 
+            margin: 10px 0; 
+            padding: 15px; 
+            border-radius: 5px;
+        }
+        .user1 { background-color: #e3f2fd; }
+        .user2 { background-color: #f3e5f5; }
+        .messages { 
+            height: 200px; 
+            overflow-y: auto; 
+            border: 1px solid #ddd; 
+            padding: 10px; 
+            margin: 10px 0;
+            background-color: #fafafa;
+        }
+        .message { 
+            padding: 5px; 
+            margin: 2px 0; 
+            border-radius: 3px;
+        }
+        .my-message { background-color: #4caf50; color: white; text-align: right; }
+        .other-message { background-color: #2196f3; color: white; }
+        .system-message { background-color: #ff9800; color: white; font-style: italic; }
+        .error-message { background-color: #f44336; color: white; }
+        input, button { padding: 8px; margin: 5px; }
+        input[type="text"] { width: 200px; }
+        .status { font-weight: bold; margin: 5px 0; }
+        .connected { color: green; }
+        .disconnected { color: red; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Chat Service Test Client</h1>
+        <p>Test real-time chat dengan 2 users menggunakan JWT token simulasi</p>
+        
+        <!-- User 1 Section -->
+        <div class="user-section user1">
+            <h3>👤 User 1 (Alice)</h3>
+            <div class="status" id="status1">❌ Disconnected</div>
+            <button onclick="connectUser1()">Connect Alice</button>
+            <button onclick="disconnectUser1()">Disconnect</button>
+            <br>
+            <input type="text" id="token1" placeholder="JWT Token (optional)" value="mock_token_alice">
+            <br>
+            <input type="text" id="conversation1" placeholder="Conversation ID" value="test_conv_123">
+            <button onclick="joinConversation1()">Join Conversation</button>
+            <br>
+            <input type="text" id="message1" placeholder="Type message..." onkeypress="if(event.key==='Enter') sendMessage1()">
+            <button onclick="sendMessage1()">Send Message</button>
+            <div class="messages" id="messages1"></div>
+        </div>
+
+        <!-- User 2 Section -->
+        <div class="user-section user2">
+            <h3>👤 User 2 (Bob)</h3>
+            <div class="status" id="status2">❌ Disconnected</div>
+            <button onclick="connectUser2()">Connect Bob</button>
+            <button onclick="disconnectUser2()">Disconnect</button>
+            <br>
+            <input type="text" id="token2" placeholder="JWT Token (optional)" value="mock_token_bob">
+            <br>
+            <input type="text" id="conversation2" placeholder="Conversation ID" value="test_conv_123">
+            <button onclick="joinConversation2()">Join Conversation</button>
+            <br>
+            <input type="text" id="message2" placeholder="Type message..." onkeypress="if(event.key==='Enter') sendMessage2()">
+            <button onclick="sendMessage2()">Send Message</button>
+            <div class="messages" id="messages2"></div>
+        </div>
+
+        <div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px;">
+            <h4>📋 Test Instructions:</h4>
+            <ol>
+                <li><strong>Connect both users</strong> - Click "Connect Alice" and "Connect Bob"</li>
+                <li><strong>Join same conversation</strong> - Use same Conversation ID for both users</li>
+                <li><strong>Send messages</strong> - Type and send messages from both users</li>
+                <li><strong>Test real-time</strong> - Messages should appear in both chat windows instantly</li>
+                <li><strong>Test rate limiting</strong> - Send many messages quickly to test rate limiter</li>
+            </ol>
+            <p><strong>Expected results:</strong> ✅ Messages appear in real-time ✅ Rate limiting works ✅ WebSocket events work</p>
+        </div>
+    </div>
+
+    <script>
+        let socket1, socket2;
+        
+        // Mock JWT tokens for testing (in real app, these would come from auth service)
+        const mockTokens = {
+            alice: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbGljZV9pZCIsInVzZXJuYW1lIjoiYWxpY2UiLCJlbWFpbCI6ImFsaWNlQHRlc3QuY29tIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE2OTc2NzY4MDAsImV4cCI6OTk5OTk5OTk5OX0.mock_signature_alice',
+            bob: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2JfaWQiLCJ1c2VybmFtZSI6ImJvYiIsImVtYWlsIjoiYm9iQHRlc3QuY29tIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE2OTc2NzY4MDAsImV4cCI6OTk5OTk5OTk5OX0.mock_signature_bob'
+        };
+
+        function connectUser1() {
+            const token = document.getElementById('token1').value || mockTokens.alice;
+            socket1 = io('http://localhost:3002/chat', {
+                auth: { token: token }
+            });
+            
+            setupSocketEvents(socket1, '1', 'Alice');
+        }
+
+        function connectUser2() {
+            const token = document.getElementById('token2').value || mockTokens.bob;
+            socket2 = io('http://localhost:3002/chat', {
+                auth: { token: token }
+            });
+            
+            setupSocketEvents(socket2, '2', 'Bob');
+        }
+
+        function setupSocketEvents(socket, userId, username) {
+            socket.on('connect', () => {
+                document.getElementById(`status${userId}`).innerHTML = '✅ Connected';
+                document.getElementById(`status${userId}`).className = 'status connected';
+                addMessage(userId, `🔗 Connected to chat service`, 'system-message');
+            });
+
+            socket.on('disconnect', () => {
+                document.getElementById(`status${userId}`).innerHTML = '❌ Disconnected';
+                document.getElementById(`status${userId}`).className = 'status disconnected';
+                addMessage(userId, `🔌 Disconnected from chat service`, 'system-message');
+            });
+
+            socket.on('authenticated', (data) => {
+                addMessage(userId, `🔐 Authenticated as ${data.user.username}`, 'system-message');
+            });
+
+            socket.on('error', (error) => {
+                addMessage(userId, `❌ Error: ${error.message || error}`, 'error-message');
+            });
+
+            socket.on('new_message', (message) => {
+                const isMyMessage = message.sender.username === username.toLowerCase();
+                const messageClass = isMyMessage ? 'my-message' : 'other-message';
+                addMessage(userId, `${message.sender.username}: ${message.content}`, messageClass);
+            });
+
+            socket.on('user_joined', (data) => {
+                addMessage(userId, `👋 ${data.username} joined the conversation`, 'system-message');
+            });
+
+            socket.on('user_left', (data) => {
+                addMessage(userId, `👋 ${data.username} left the conversation`, 'system-message');
+            });
+
+            socket.on('user_typing', (data) => {
+                if (data.isTyping) {
+                    addMessage(userId, `⌨️ ${data.username} is typing...`, 'system-message');
+                }
+            });
+        }
+
+        function disconnectUser1() {
+            if (socket1) {
+                socket1.disconnect();
+                socket1 = null;
+            }
+        }
+
+        function disconnectUser2() {
+            if (socket2) {
+                socket2.disconnect();
+                socket2 = null;
+            }
+        }
+
+        function joinConversation1() {
+            if (!socket1) {
+                alert('Please connect Alice first');
+                return;
+            }
+            const conversationId = document.getElementById('conversation1').value;
+            socket1.emit('join_conversation', { conversationId });
+        }
+
+        function joinConversation2() {
+            if (!socket2) {
+                alert('Please connect Bob first');
+                return;
+            }
+            const conversationId = document.getElementById('conversation2').value;
+            socket2.emit('join_conversation', { conversationId });
+        }
+
+        function sendMessage1() {
+            if (!socket1) {
+                alert('Please connect Alice first');
+                return;
+            }
+            const message = document.getElementById('message1').value;
+            const conversationId = document.getElementById('conversation1').value;
+            
+            if (message.trim()) {
+                socket1.emit('send_message', {
+                    conversationId,
+                    content: message.trim(),
+                    type: 'TEXT'
+                });
+                document.getElementById('message1').value = '';
+            }
+        }
+
+        function sendMessage2() {
+            if (!socket2) {
+                alert('Please connect Bob first');
+                return;
+            }
+            const message = document.getElementById('message2').value;
+            const conversationId = document.getElementById('conversation2').value;
+            
+            if (message.trim()) {
+                socket2.emit('send_message', {
+                    conversationId,
+                    content: message.trim(),
+                    type: 'TEXT'
+                });
+                document.getElementById('message2').value = '';
+            }
+        }
+
+        function addMessage(userId, text, className) {
+            const messagesDiv = document.getElementById(`messages${userId}`);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${className}`;
+            messageDiv.innerHTML = `<small>${new Date().toLocaleTimeString()}</small><br>${text}`;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    </script>
+</body>
+</html>

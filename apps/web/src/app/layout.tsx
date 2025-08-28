@@ -1,7 +1,7 @@
+// keep as server component to allow metadata; styled-jsx is wrapped only around children
 import { FC, ReactNode } from 'react'
 import type { Metadata } from 'next'
 import './globals.css'
-import dynamic from 'next/dynamic'
 import UnregisterSW from './unregister-sw'
 import { Providers } from './providers'
 
@@ -23,6 +23,9 @@ export const viewport = {
   userScalable: false,
   themeColor: '#3b82f6',
 }
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 interface RootLayoutProps {
   children: ReactNode
