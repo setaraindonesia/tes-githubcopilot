@@ -21,6 +21,15 @@ let ChatController = class ChatController {
     constructor(chatService) {
         this.chatService = chatService;
     }
+    async health() {
+        return {
+            status: 'ok',
+            timestamp: new Date().toISOString(),
+            service: 'chat-service',
+            version: '1.0.0',
+            database: 'connected'
+        };
+    }
     async createConversation(createConversationDto, req) {
         if (!createConversationDto.participantIds.includes(req.user.userId)) {
             createConversationDto.participantIds.push(req.user.userId);
@@ -52,7 +61,14 @@ let ChatController = class ChatController {
 };
 exports.ChatController = ChatController;
 __decorate([
+    (0, common_1.Get)('health'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "health", null);
+__decorate([
     (0, common_1.Post)('conversations'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
@@ -100,7 +116,6 @@ __decorate([
 ], ChatController.prototype, "getOnlineUsers", null);
 exports.ChatController = ChatController = __decorate([
     (0, common_1.Controller)('chat'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __metadata("design:paramtypes", [chat_service_1.ChatService])
 ], ChatController);
 //# sourceMappingURL=chat.controller.js.map

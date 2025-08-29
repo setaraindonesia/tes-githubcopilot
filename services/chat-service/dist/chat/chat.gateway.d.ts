@@ -6,6 +6,7 @@ interface AuthenticatedSocket extends Socket {
         userId: string;
         username: string;
         email: string;
+        role?: string;
     };
 }
 import { AuthService } from '../auth/auth.service';
@@ -40,20 +41,7 @@ export declare class ChatGateway implements OnGatewayConnection, OnGatewayDiscon
     }, client: AuthenticatedSocket): Promise<{
         success: boolean;
         message: string;
-        data: {
-            sender: {
-                id: string;
-                username: string;
-                avatar: string;
-            };
-        } & {
-            id: string;
-            type: import(".prisma/client").$Enums.MessageType;
-            createdAt: Date;
-            conversationId: string;
-            senderId: string;
-            content: string;
-        };
+        data: any;
     }>;
     handleTypingStart(data: {
         conversationId: string;
@@ -72,12 +60,7 @@ export declare class ChatGateway implements OnGatewayConnection, OnGatewayDiscon
     }, client: AuthenticatedSocket): Promise<{
         success: boolean;
         message: string;
-        data: {
-            id: string;
-            userId: string;
-            messageId: string;
-            readAt: Date;
-        };
+        data: any;
     } | {
         success: boolean;
         message: string;
@@ -88,12 +71,7 @@ export declare class ChatGateway implements OnGatewayConnection, OnGatewayDiscon
     }, client: AuthenticatedSocket): Promise<{
         success: boolean;
         message: string;
-        data: {
-            id: string;
-            userId: string;
-            messageId: string;
-            readAt: Date;
-        }[];
+        data: any[];
     } | {
         success: boolean;
         message: string;

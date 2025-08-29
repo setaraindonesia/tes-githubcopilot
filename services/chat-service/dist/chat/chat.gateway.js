@@ -32,8 +32,29 @@ let ChatGateway = class ChatGateway {
         try {
             const token = this.authService.extractTokenFromSocket(client);
             if (!token) {
+                if (process.env.NODE_ENV === 'development') {
+                    client.user = {
+                        userId: `test_user_${client.id}`,
+                        username: `testuser_${client.id.substring(0, 4)}`,
+                        email: `test_${client.id}@test.com`,
+                        role: 'USER'
+                    };
+                    this.connectedUsers.set(client.user.userId, client);
+                    this.logger.logUserAction(client.user.userId, 'websocket_connected_dev', {
+                        clientId: client.id,
+                        username: client.user.username
+                    });
+                    client.emit('authenticated', {
+                        message: 'Successfully authenticated (dev mode)',
+                        user: client.user
+                    });
+                    return;
+                }
                 this.logger.logAuthenticationFailure('No token provided', { clientId: client.id });
-                client.emit('error', { message: 'Authentication required' });
+                client.emit('error', {
+                    code: 'AUTH_REQUIRED',
+                    message: 'Authentication token required'
+                });
                 client.disconnect();
                 return;
             }
@@ -51,7 +72,10 @@ let ChatGateway = class ChatGateway {
         }
         catch (error) {
             this.logger.logAuthenticationFailure(error.message, { clientId: client.id });
-            client.emit('error', { message: 'Authentication failed' });
+            client.emit('error', {
+                code: 'AUTH_FAILED',
+                message: error.message || 'Authentication failed'
+            });
             client.disconnect();
         }
     }
@@ -319,9 +343,15 @@ __decorate([
 exports.ChatGateway = ChatGateway = __decorate([
     (0, websockets_1.WebSocketGateway)({
         cors: {
-            origin: ['http://localhost:3000', 'http://localhost:3001'],
+            origin: process.env.ALLOWED_ORIGINS?.split(',') || [
+                'http://localhost:3000',
+                'http://localhost:3001',
+                'https://web-5it9deahv-setaraindonesias-projects.vercel.app'
+            ],
             credentials: true,
+            methods: ['GET', 'POST'],
         },
+        namespace: '/chat',
     }),
     __metadata("design:paramtypes", [chat_service_1.ChatService,
         auth_service_1.AuthService,

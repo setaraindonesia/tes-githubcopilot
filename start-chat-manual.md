@@ -58,3 +58,4 @@ cd services\chat-service; npm run start:dev
 - Verify conversation created
 - Check browser console for errors
 
+

@@ -48,3 +48,27 @@ export class ResetPasswordDto {
   @MinLength(6, { message: 'Password minimal 6 karakter' })
   password: string;
 }
+
+export class UpdateProfileDto {
+  @IsOptional()
+  @IsString()
+  firstName?: string;
+
+  @IsOptional()
+  @IsString()
+  lastName?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
+}
+
+export class ChangePasswordDto {
+  @IsString()
+  @MinLength(6, { message: 'Password minimal 6 karakter' })
+  currentPassword: string;
+
+  @IsString()
+  @MinLength(6, { message: 'Password minimal 6 karakter' })
+  newPassword: string;
+}

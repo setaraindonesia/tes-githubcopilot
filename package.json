@@ -28,7 +28,15 @@
     "apps:dev": "turbo run dev --filter=./apps/*",
     "packages:build": "turbo run build --filter=./packages/*",
     "chat:test:setup": "node scripts/create-test-users.js",
-    "chat:test:start": "powershell -ExecutionPolicy Bypass -File scripts/start-chat-testing.ps1"
+    "chat:test:start": "powershell -ExecutionPolicy Bypass -File scripts/start-chat-testing.ps1",
+    "start:dev": "npm run auth:dev",
+    "auth:dev": "cd services/auth-service && npm install && npm run build && npm run start:dev",
+    "auth:build": "cd services/auth-service && npm run build",
+    "auth:start": "cd services/auth-service && npm run start:prod",
+    "auth:test": "cd services/auth-service && npm run test",
+    "auth:seed": "cd services/auth-service && npm run seed",
+    "chat:dev": "cd services/chat-service && npm install && npm run build && npm run start:dev",
+    "chat:build": "cd services/chat-service && npm run build"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

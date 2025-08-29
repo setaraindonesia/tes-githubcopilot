@@ -10,3 +10,4 @@ Write-Host "📁 Changed to chat-service directory" -ForegroundColor Yellow
 Write-Host "🔧 Starting NestJS chat service..." -ForegroundColor Yellow
 npm run start:dev
 
+

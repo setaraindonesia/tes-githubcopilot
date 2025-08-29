@@ -1,6 +1,9 @@
-import { Controller, Post, Body, Get, Param, HttpException, HttpStatus, ConflictException, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Put, UseGuards, HttpException, HttpStatus, ConflictException, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { EmailService } from '../email/email.service';
 import { RegisterDto, LoginDto, VerifyEmailDto } from './dto/auth.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { CurrentUser } from './decorators/current-user.decorator';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { PrismaService } from '../prisma/prisma.service';
@@ -9,7 +12,8 @@ import { PrismaService } from '../prisma/prisma.service';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
   ) {}
 
   @Post('register')
@@ -57,8 +61,8 @@ export class AuthController {
         }
       });
 
-      // TODO: Send verification email
-      // await this.emailService.sendVerificationEmail(user.email, emailVerificationToken);
+      // Send verification email (non-blocking best-effort)
+      await this.emailService.sendVerificationEmail(user.email, emailVerificationToken);
 
       return {
         message: 'Registrasi berhasil! Silakan cek email untuk verifikasi.',
@@ -100,13 +104,16 @@ export class AuthController {
         throw new UnauthorizedException('Username atau password salah');
       }
 
-      // Generate JWT token
+      // Generate JWT token with proper payload
       const token = jwt.sign(
         { 
+          sub: user.id,        // ← CRITICAL: 'sub' field untuk JWT Strategy
           userId: user.id, 
           username: user.username,
           email: user.email,
-          role: user.role 
+          role: user.role,
+          iat: Math.floor(Date.now() / 1000),
+          exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days
         },
         process.env.JWT_SECRET || 'your-super-secret-jwt-key',
         { expiresIn: '7d' }
@@ -198,8 +205,8 @@ export class AuthController {
         data: { emailVerificationToken }
       });
 
-      // TODO: Send verification email
-      // await this.emailService.sendVerificationEmail(user.email, emailVerificationToken);
+      // Send verification email (non-blocking best-effort)
+      await this.emailService.sendVerificationEmail(user.email, emailVerificationToken);
 
       return {
         message: 'Email verifikasi telah dikirim ulang'
@@ -243,6 +250,150 @@ export class AuthController {
       };
     } catch (error) {
       throw new HttpException('Terjadi kesalahan saat mengecek email', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  // ===== PROTECTED ENDPOINTS =====
+
+  @Get('health')
+  async healthCheck() {
+    return {
+      status: 'ok',
+      service: 'auth-service',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  async getProfile(@CurrentUser() user: any) {
+    try {
+      const userProfile = await this.prisma.user.findUnique({
+        where: { id: user.id },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          phone: true,
+          avatar: true,
+          emailVerified: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      if (!userProfile) {
+        throw new NotFoundException('User tidak ditemukan');
+      }
+
+      return {
+        message: 'Profile berhasil diambil',
+        user: userProfile,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new HttpException('Terjadi kesalahan saat mengambil profile', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put('profile')
+  async updateProfile(
+    @CurrentUser() user: any,
+    @Body() updateData: { firstName?: string; lastName?: string; phone?: string }
+  ) {
+    try {
+      const updatedUser = await this.prisma.user.update({
+        where: { id: user.id },
+        data: updateData,
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          phone: true,
+          avatar: true,
+          updatedAt: true,
+        },
+      });
+
+      return {
+        message: 'Profile berhasil diupdate',
+        user: updatedUser,
+      };
+    } catch (error) {
+      throw new HttpException('Terjadi kesalahan saat update profile', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  async logout(@CurrentUser() user: any) {
+    try {
+      // Invalidate all sessions for this user
+      await this.prisma.session.deleteMany({
+        where: { userId: user.id },
+      });
+
+      return {
+        message: 'Logout berhasil',
+      };
+    } catch (error) {
+      throw new HttpException('Terjadi kesalahan saat logout', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  async changePassword(
+    @CurrentUser() user: any,
+    @Body() body: { currentPassword: string; newPassword: string }
+  ) {
+    try {
+      // Get current user with password
+      const currentUser = await this.prisma.user.findUnique({
+        where: { id: user.id },
+      });
+
+      if (!currentUser) {
+        throw new NotFoundException('User tidak ditemukan');
+      }
+
+      // Verify current password
+      const isCurrentPasswordValid = await bcrypt.compare(body.currentPassword, currentUser.password);
+      if (!isCurrentPasswordValid) {
+        throw new UnauthorizedException('Password saat ini salah');
+      }
+
+      // Hash new password
+      const hashedNewPassword = await bcrypt.hash(body.newPassword, 10);
+
+      // Update password
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedNewPassword },
+      });
+
+      // Invalidate all sessions (force re-login)
+      await this.prisma.session.deleteMany({
+        where: { userId: user.id },
+      });
+
+      return {
+        message: 'Password berhasil diubah. Silakan login ulang.',
+      };
+    } catch (error) {
+      if (error instanceof UnauthorizedException || error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new HttpException('Terjadi kesalahan saat ubah password', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

@@ -1,0 +1,36 @@
+🚀 RAILWAY COPY-PASTE COMMANDS
+
+=== AUTH SERVICE ===
+Root Directory:
+services/auth-service
+
+Build Command:
+npm install && npx prisma generate --schema=./prisma/schema.prisma && npx prisma migrate deploy --schema=./prisma/schema.prisma && npm run build
+
+Start Command:
+npm run start:prod
+
+=== CHAT SERVICE ===
+Root Directory:
+services/chat-service
+
+Build Command:
+npm install && npx prisma generate --schema=./prisma/schema.prisma && npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss && npm run build
+
+Start Command:
+npm run start:prod
+
+=== CHECKLIST ===
+□ Auth: UNCHECK "Use Dockerfile"
+□ Auth: Set Root Directory
+□ Auth: Set Build Command
+□ Auth: Set Start Command  
+□ Auth: Save & Deploy
+□ Chat: UNCHECK "Use Dockerfile"
+□ Chat: Set Root Directory
+□ Chat: Set Build Command
+□ Chat: Set Start Command
+□ Chat: Save & Deploy
+□ Both: Wait for "Deployed" status
+□ Both: Test health endpoints
+□ SUCCESS! 🎉

@@ -15,14 +15,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
 const auth_service_1 = require("./auth.service");
+const email_service_1 = require("../email/email.service");
 const auth_dto_1 = require("./dto/auth.dto");
+const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
+const current_user_decorator_1 = require("./decorators/current-user.decorator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const prisma_service_1 = require("../prisma/prisma.service");
 let AuthController = class AuthController {
-    constructor(authService, prisma) {
+    constructor(authService, prisma, emailService) {
         this.authService = authService;
         this.prisma = prisma;
+        this.emailService = emailService;
     }
     async register(registerDto) {
         try {
@@ -56,6 +60,7 @@ let AuthController = class AuthController {
                     createdAt: true,
                 }
             });
+            await this.emailService.sendVerificationEmail(user.email, emailVerificationToken);
             return {
                 message: 'Registrasi berhasil! Silakan cek email untuk verifikasi.',
                 user: {
@@ -89,10 +94,13 @@ let AuthController = class AuthController {
                 throw new common_1.UnauthorizedException('Username atau password salah');
             }
             const token = jwt.sign({
+                sub: user.id,
                 userId: user.id,
                 username: user.username,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                iat: Math.floor(Date.now() / 1000),
+                exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60)
             }, process.env.JWT_SECRET || 'your-super-secret-jwt-key', { expiresIn: '7d' });
             await this.prisma.session.create({
                 data: {
@@ -166,6 +174,7 @@ let AuthController = class AuthController {
                 where: { id: user.id },
                 data: { emailVerificationToken }
             });
+            await this.emailService.sendVerificationEmail(user.email, emailVerificationToken);
             return {
                 message: 'Email verifikasi telah dikirim ulang'
             };
@@ -205,6 +214,116 @@ let AuthController = class AuthController {
         }
         catch (error) {
             throw new common_1.HttpException('Terjadi kesalahan saat mengecek email', common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async healthCheck() {
+        return {
+            status: 'ok',
+            service: 'auth-service',
+            timestamp: new Date().toISOString(),
+            uptime: process.uptime(),
+        };
+    }
+    async getProfile(user) {
+        try {
+            const userProfile = await this.prisma.user.findUnique({
+                where: { id: user.id },
+                select: {
+                    id: true,
+                    username: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    phone: true,
+                    avatar: true,
+                    emailVerified: true,
+                    role: true,
+                    createdAt: true,
+                    updatedAt: true,
+                },
+            });
+            if (!userProfile) {
+                throw new common_1.NotFoundException('User tidak ditemukan');
+            }
+            return {
+                message: 'Profile berhasil diambil',
+                user: userProfile,
+            };
+        }
+        catch (error) {
+            if (error instanceof common_1.NotFoundException) {
+                throw error;
+            }
+            throw new common_1.HttpException('Terjadi kesalahan saat mengambil profile', common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async updateProfile(user, updateData) {
+        try {
+            const updatedUser = await this.prisma.user.update({
+                where: { id: user.id },
+                data: updateData,
+                select: {
+                    id: true,
+                    username: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    phone: true,
+                    avatar: true,
+                    updatedAt: true,
+                },
+            });
+            return {
+                message: 'Profile berhasil diupdate',
+                user: updatedUser,
+            };
+        }
+        catch (error) {
+            throw new common_1.HttpException('Terjadi kesalahan saat update profile', common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async logout(user) {
+        try {
+            await this.prisma.session.deleteMany({
+                where: { userId: user.id },
+            });
+            return {
+                message: 'Logout berhasil',
+            };
+        }
+        catch (error) {
+            throw new common_1.HttpException('Terjadi kesalahan saat logout', common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async changePassword(user, body) {
+        try {
+            const currentUser = await this.prisma.user.findUnique({
+                where: { id: user.id },
+            });
+            if (!currentUser) {
+                throw new common_1.NotFoundException('User tidak ditemukan');
+            }
+            const isCurrentPasswordValid = await bcrypt.compare(body.currentPassword, currentUser.password);
+            if (!isCurrentPasswordValid) {
+                throw new common_1.UnauthorizedException('Password saat ini salah');
+            }
+            const hashedNewPassword = await bcrypt.hash(body.newPassword, 10);
+            await this.prisma.user.update({
+                where: { id: user.id },
+                data: { password: hashedNewPassword },
+            });
+            await this.prisma.session.deleteMany({
+                where: { userId: user.id },
+            });
+            return {
+                message: 'Password berhasil diubah. Silakan login ulang.',
+            };
+        }
+        catch (error) {
+            if (error instanceof common_1.UnauthorizedException || error instanceof common_1.NotFoundException) {
+                throw error;
+            }
+            throw new common_1.HttpException('Terjadi kesalahan saat ubah password', common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 };
@@ -251,9 +370,50 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "checkEmail", null);
+__decorate([
+    (0, common_1.Get)('health'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "healthCheck", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('profile'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "getProfile", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Put)('profile'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "updateProfile", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('logout'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "logout", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('change-password'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "changePassword", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService,
-        prisma_service_1.PrismaService])
+        prisma_service_1.PrismaService,
+        email_service_1.EmailService])
 ], AuthController);
 //# sourceMappingURL=auth.controller.js.map

@@ -17,6 +17,7 @@ interface AuthenticatedSocket extends Socket {
     userId: string;
     username: string;
     email: string;
+    role?: string;
   };
 }
 import { SendMessageDto, JoinConversationDto } from './dto/chat.dto';

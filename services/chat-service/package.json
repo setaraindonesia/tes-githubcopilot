@@ -16,9 +16,11 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
+    "migrate:deploy": "prisma migrate deploy --schema=./prisma/schema.prisma",
     "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
     "prisma:push": "prisma db push --schema=./prisma/schema.prisma --accept-data-loss",
-    "deploy": "npm run prisma:generate && npm run prisma:push && npm run build"
+    "deploy": "npm run prisma:generate && npm run prisma:push && npm run build",
+    "postinstall": "prisma generate --schema=./prisma/schema.prisma"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

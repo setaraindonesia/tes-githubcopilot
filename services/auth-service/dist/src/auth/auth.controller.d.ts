@@ -1,10 +1,12 @@
 import { AuthService } from './auth.service';
+import { EmailService } from '../email/email.service';
 import { RegisterDto, LoginDto, VerifyEmailDto } from './dto/auth.dto';
 import { PrismaService } from '../prisma/prisma.service';
 export declare class AuthController {
     private readonly authService;
     private readonly prisma;
-    constructor(authService: AuthService, prisma: PrismaService);
+    private readonly emailService;
+    constructor(authService: AuthService, prisma: PrismaService, emailService: EmailService);
     register(registerDto: RegisterDto): Promise<{
         message: string;
         user: {
@@ -39,6 +41,54 @@ export declare class AuthController {
     }>;
     checkEmail(email: string): Promise<{
         available: boolean;
+        message: string;
+    }>;
+    healthCheck(): Promise<{
+        status: string;
+        service: string;
+        timestamp: string;
+        uptime: number;
+    }>;
+    getProfile(user: any): Promise<{
+        message: string;
+        user: {
+            username: string;
+            email: string;
+            firstName: string;
+            lastName: string;
+            phone: string;
+            id: string;
+            avatar: string;
+            emailVerified: boolean;
+            role: import(".prisma/client").$Enums.UserRole;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+    }>;
+    updateProfile(user: any, updateData: {
+        firstName?: string;
+        lastName?: string;
+        phone?: string;
+    }): Promise<{
+        message: string;
+        user: {
+            username: string;
+            email: string;
+            firstName: string;
+            lastName: string;
+            phone: string;
+            id: string;
+            avatar: string;
+            updatedAt: Date;
+        };
+    }>;
+    logout(user: any): Promise<{
+        message: string;
+    }>;
+    changePassword(user: any, body: {
+        currentPassword: string;
+        newPassword: string;
+    }): Promise<{
         message: string;
     }>;
 }

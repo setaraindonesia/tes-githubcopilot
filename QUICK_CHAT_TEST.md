@@ -120,3 +120,4 @@ This should work even if one method fails!
 
 **With dual transport methods, cross-browser messaging should be much more reliable!** 🎉
 
+
