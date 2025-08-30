@@ -212,8 +212,8 @@ export class AuthController {
           username: user.username,
           email: user.email,
           role: user.role,
-          iat: Math.floor(Date.now() / 1000),
-          exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days
+          iat: Math.floor(Date.now() / 1000)
+          // Remove manual 'exp' - let expiresIn option handle it
         },
         jwtSecret,
         { expiresIn: '7d' }
