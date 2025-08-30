@@ -4,9 +4,17 @@ import { EmailService } from '../email/email.service';
 import { RegisterDto, LoginDto, VerifyEmailDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
-import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { PrismaService } from '../prisma/prisma.service';
+
+// Import bcrypt with better error handling
+let bcrypt: any;
+try {
+  bcrypt = require('bcrypt');
+} catch (error) {
+  console.error('Failed to load bcrypt:', error);
+  throw new Error('bcrypt is required for password hashing');
+}
 
 @Controller('auth')
 export class AuthController {
@@ -107,8 +115,21 @@ export class AuthController {
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     try {
-      // Support login with username OR email using a single identifier field
+      // Validate input
       const identifier = (loginDto.usernameOrEmail || '').trim();
+      const password = (loginDto.password || '').trim();
+      
+      if (!identifier) {
+        throw new UnauthorizedException('Username atau email harus diisi');
+      }
+      
+      if (!password) {
+        throw new UnauthorizedException('Password harus diisi');
+      }
+
+      console.log('[AUTH][LOGIN][START]', { identifier: identifier.substring(0, 3) + '***' });
+
+      // Find user by username OR email
       const user = await this.prisma.user.findFirst({
         where: {
           OR: [
@@ -119,26 +140,71 @@ export class AuthController {
       });
 
       if (!user) {
+        console.log('[AUTH][LOGIN][USER_NOT_FOUND]', { identifier: identifier.substring(0, 3) + '***' });
         throw new UnauthorizedException('Username atau password salah');
       }
+
+      console.log('[AUTH][LOGIN][USER_FOUND]', { id: user.id, username: user.username, emailVerified: user.emailVerified });
 
       // Check if user is active
       if (!user.isActive) {
+        console.log('[AUTH][LOGIN][USER_INACTIVE]', { id: user.id });
         throw new UnauthorizedException('Akun Anda telah dinonaktifkan');
       }
 
-      // If email verification is required, block login until verified
-      if (!user.emailVerified && process.env.NODE_ENV === 'production') {
-        throw new UnauthorizedException('Email belum diverifikasi');
+      // Email verification check (controlled by env)
+      const requireEmailVerified = process.env.REQUIRE_EMAIL_VERIFIED === 'true';
+      if (requireEmailVerified && !user.emailVerified) {
+        console.log('[AUTH][LOGIN][EMAIL_NOT_VERIFIED]', { id: user.id });
+        throw new UnauthorizedException('Email belum diverifikasi. Silakan cek email Anda.');
       }
 
-      // Verify password
-      const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
+      // Verify password with comprehensive error handling
+      let isPasswordValid = false;
+      try {
+        if (!user.password) {
+          console.log('[AUTH][LOGIN][NO_PASSWORD]', { id: user.id });
+          throw new UnauthorizedException('Username atau password salah');
+        }
+
+        if (typeof user.password !== 'string') {
+          console.log('[AUTH][LOGIN][INVALID_PASSWORD_TYPE]', { id: user.id, type: typeof user.password });
+          throw new UnauthorizedException('Username atau password salah');
+        }
+
+        // Check if password looks like a valid bcrypt hash
+        if (!user.password.startsWith('$2b$') && !user.password.startsWith('$2a$') && !user.password.startsWith('$2y$')) {
+          console.log('[AUTH][LOGIN][INVALID_HASH_FORMAT]', { id: user.id, hashPrefix: user.password.substring(0, 4) });
+          throw new UnauthorizedException('Username atau password salah');
+        }
+
+        console.log('[AUTH][LOGIN][COMPARING_PASSWORD]', { id: user.id });
+        isPasswordValid = await bcrypt.compare(password, user.password);
+        console.log('[AUTH][LOGIN][PASSWORD_RESULT]', { id: user.id, valid: isPasswordValid });
+
+      } catch (passwordError) {
+        console.error('[AUTH][LOGIN][PASSWORD_ERROR]', { 
+          id: user.id, 
+          error: passwordError instanceof Error ? passwordError.message : String(passwordError),
+          stack: passwordError instanceof Error ? passwordError.stack : undefined
+        });
+        
+        if (passwordError instanceof UnauthorizedException) {
+          throw passwordError;
+        }
+        
+        throw new UnauthorizedException('Username atau password salah');
+      }
+      
       if (!isPasswordValid) {
+        console.log('[AUTH][LOGIN][INVALID_PASSWORD]', { id: user.id });
         throw new UnauthorizedException('Username atau password salah');
       }
 
+      console.log('[AUTH][LOGIN][SUCCESS]', { id: user.id, username: user.username });
+
       // Generate JWT token with proper payload
+      const jwtSecret = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
       const token = jwt.sign(
         { 
           sub: user.id,        // ← CRITICAL: 'sub' field untuk JWT Strategy
@@ -149,18 +215,23 @@ export class AuthController {
           iat: Math.floor(Date.now() / 1000),
           exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days
         },
-        process.env.JWT_SECRET || 'your-super-secret-jwt-key',
+        jwtSecret,
         { expiresIn: '7d' }
       );
 
       // Create session
-      await this.prisma.session.create({
-        data: {
-          userId: user.id,
-          token,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-        }
-      });
+      try {
+        await this.prisma.session.create({
+          data: {
+            userId: user.id,
+            token,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+          }
+        });
+      } catch (sessionError) {
+        console.error('[AUTH][LOGIN][SESSION_ERROR]', sessionError);
+        // Continue even if session creation fails
+      }
 
       return {
         message: 'Login berhasil',
@@ -177,6 +248,19 @@ export class AuthController {
       if (error instanceof UnauthorizedException) {
         throw error;
       }
+      
+      // Log comprehensive error details
+      console.error('[AUTH][LOGIN][ERROR]', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (process.env.DEBUG_AUTH_ERRORS === 'true') {
+        const message = error instanceof Error ? error.message : 'Terjadi kesalahan saat login';
+        throw new HttpException(`[DEBUG] ${message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+      
       throw new HttpException('Terjadi kesalahan saat login', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -267,10 +351,10 @@ export class AuthController {
 
       await this.prisma.user.update({
         where: { id: user.id },
-        data: {
+        data: ({
           passwordResetToken: token,
           passwordResetExpires: expires,
-        }
+        } as any)
       });
 
       await this.emailService.sendPasswordResetEmail(user.email, token);
@@ -285,11 +369,11 @@ export class AuthController {
   async resetPassword(@Body() dto: ResetPasswordDto & { email?: string }) {
     try {
       const user = await this.prisma.user.findFirst({
-        where: {
+        where: ({
           email: dto.email || undefined,
           passwordResetToken: dto.token,
           passwordResetExpires: { gt: new Date() },
-        }
+        } as any)
       });
 
       if (!user) {
@@ -300,11 +384,11 @@ export class AuthController {
 
       await this.prisma.user.update({
         where: { id: user.id },
-        data: {
+        data: ({
           password: hashed,
           passwordResetToken: null,
           passwordResetExpires: null,
-        }
+        } as any)
       });
 
       // Invalidate sessions

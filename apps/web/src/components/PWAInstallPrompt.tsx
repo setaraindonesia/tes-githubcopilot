@@ -111,7 +111,7 @@ const PWAInstallPrompt = () => {
               </p>
               <ol className="text-sm text-gray-600 space-y-1 mb-3 list-decimal list-inside">
                 <li>Tap the Share button <span className="inline-block">📤</span></li>
-                <li>Scroll down and tap "Add to Home Screen"</li>
+                <li>Scroll down and tap &quot;Add to Home Screen&quot;</li>
                 <li>Tap "Add" to confirm</li>
               </ol>
               <button

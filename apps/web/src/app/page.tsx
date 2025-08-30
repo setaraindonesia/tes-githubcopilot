@@ -51,7 +51,7 @@ const HomePage: FC = () => {
             <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <p className="text-sm text-blue-800 text-center mb-2">
                 📱 <strong>Install as App:</strong> Android users will see install prompt automatically. 
-                iPhone users: tap Share → "Add to Home Screen"
+                iPhone users: tap Share → &quot;Add to Home Screen&quot;
               </p>
             </div>
           </div>
