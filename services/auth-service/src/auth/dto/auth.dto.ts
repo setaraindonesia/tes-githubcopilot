@@ -24,7 +24,7 @@ export class RegisterDto {
 
 export class LoginDto {
   @IsString()
-  username: string;
+  usernameOrEmail: string;
 
   @IsString()
   password: string;

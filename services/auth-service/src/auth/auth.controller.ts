@@ -84,7 +84,7 @@ export class AuthController {
   async login(@Body() loginDto: LoginDto) {
     try {
       // Support login with username OR email using a single identifier field
-      const identifier = (loginDto.username || '').trim();
+      const identifier = (loginDto.usernameOrEmail || '').trim();
       const user = await this.prisma.user.findFirst({
         where: {
           OR: [
