@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Mock user storage (in real app, this would be database)
-const mockUsers: any[] = []
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { username, email, password } = body
 
-    // Validation
+    // Validation (tetap di sisi Next.js agar UX cepat)
     if (!username || !email || !password) {
       return NextResponse.json(
         { message: 'Username, email, dan password wajib diisi' },
@@ -44,53 +41,50 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if username already exists
-    const existingUserByUsername = mockUsers.find(user => user.username === username)
-    if (existingUserByUsername) {
+    // Proxy ke Auth Service di Railway
+    const authServiceUrl = process.env.NEXT_PUBLIC_AUTH_API_URL as string
+    if (!authServiceUrl) {
       return NextResponse.json(
-        { message: 'Username sudah digunakan', field: 'username' },
-        { status: 409 }
+        { message: 'Auth service URL tidak dikonfigurasi' },
+        { status: 500 }
       )
     }
 
-    // Check if email already exists
-    const existingUserByEmail = mockUsers.find(user => user.email === email)
-    if (existingUserByEmail) {
-      return NextResponse.json(
-        { message: 'Email sudah digunakan', field: 'email' },
-        { status: 409 }
-      )
-    }
-
-    // Create user (mock)
-    const newUser = {
-      id: `user_${Date.now()}`,
-      username,
-      email,
-      emailVerified: false,
-      emailVerificationToken: `token_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`,
-      createdAt: new Date().toISOString()
-    }
-
-    mockUsers.push(newUser)
-
-    // Log untuk debugging
-    console.log('📧 Mock Email Verification:')
-    console.log(`To: ${email}`)
-    console.log(`Subject: Verifikasi Email Setara DApps`)
-    console.log(`Verification Link: http://localhost:3000/verify-email?token=${newUser.emailVerificationToken}`)
-    console.log('---')
-
-    return NextResponse.json({
-      message: 'Registrasi berhasil! Silakan cek email untuk verifikasi.',
-      user: {
-        id: newUser.id,
-        username: newUser.username,
-        email: newUser.email,
-        emailVerified: newUser.emailVerified
-      }
+    const response = await fetch(`${authServiceUrl}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, email, password })
     })
 
+    const data = await response.json().catch(() => ({}))
+
+    if (response.ok) {
+      return NextResponse.json({
+        message: data?.message || 'Registrasi berhasil! Silakan cek email untuk verifikasi.',
+        user: data?.user
+      })
+    }
+
+    // Map beberapa error umum agar inline di form
+    if (typeof data?.message === 'string') {
+      if (data.message.includes('Username sudah digunakan')) {
+        return NextResponse.json(
+          { message: 'Username sudah digunakan', field: 'username' },
+          { status: 409 }
+        )
+      }
+      if (data.message.includes('Email sudah digunakan')) {
+        return NextResponse.json(
+          { message: 'Email sudah digunakan', field: 'email' },
+          { status: 409 }
+        )
+      }
+    }
+
+    return NextResponse.json(
+      { message: data?.message || 'Terjadi kesalahan saat registrasi' },
+      { status: response.status || 500 }
+    )
   } catch (error) {
     console.error('Registration error:', error)
     return NextResponse.json(

@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Mock users storage (in real app, this would be database)
-const mockUsers: any[] = []
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -15,25 +12,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find user by token (mock)
-    const userIndex = mockUsers.findIndex(user => user.emailVerificationToken === token)
-    if (userIndex === -1) {
+    // Proxy ke Auth Service di Railway
+    const authServiceUrl = process.env.NEXT_PUBLIC_AUTH_API_URL as string
+    if (!authServiceUrl) {
       return NextResponse.json(
-        { message: 'Token verifikasi tidak valid atau sudah digunakan' },
-        { status: 404 }
+        { message: 'Auth service URL tidak dikonfigurasi' },
+        { status: 500 }
       )
     }
 
-    // Update user email verification status
-    mockUsers[userIndex].emailVerified = true
-    mockUsers[userIndex].emailVerificationToken = null
-
-    console.log('✅ Email verified for:', mockUsers[userIndex].email)
-
-    return NextResponse.json({
-      message: 'Email berhasil diverifikasi!'
+    const response = await fetch(`${authServiceUrl}/auth/verify-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
     })
 
+    const data = await response.json().catch(() => ({}))
+
+    if (response.ok) {
+      return NextResponse.json({
+        message: data?.message || 'Email berhasil diverifikasi!'
+      })
+    }
+
+    return NextResponse.json(
+      { message: data?.message || 'Token verifikasi tidak valid' },
+      { status: response.status || 500 }
+    )
   } catch (error) {
     console.error('Email verification error:', error)
     return NextResponse.json(

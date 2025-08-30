@@ -23,16 +23,16 @@ export class EmailService {
 
     const verifyUrl = `${this.appWebUrl}/verify-email?token=${encodeURIComponent(token)}`;
 
-    const subject = 'Verifikasi Email Setaradapps';
+    const subject = 'Kode Verifikasi Email Setaradapps';
     const html = `
       <div style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #0f172a;">
         <h2 style="margin: 0 0 12px; color: #111827;">Selamat datang di Setaradapps 👋</h2>
-        <p style="margin: 0 0 16px;">Terima kasih telah mendaftar. Silakan verifikasi email Anda dengan menekan tombol di bawah ini.</p>
+        <p style="margin: 0 0 16px;">Gunakan <strong>kode verifikasi 6 digit</strong> berikut untuk memverifikasi email Anda.</p>
+        <div style="font-size:28px;letter-spacing:8px;font-weight:700;background:#f3f4f6;padding:12px;border-radius:8px;text-align:center;color:#111827;">${token}</div>
+        <p style="margin: 16px 0 8px;">Atau klik tombol di bawah ini:</p>
         <p style="margin: 0 0 16px;">
-          <a href="${verifyUrl}" style="display:inline-block;padding:10px 16px;background:#0066FF;color:#ffffff;text-decoration:none;border-radius:8px;">Verifikasi Email</a>
+          <a href="${verifyUrl}" style="display:inline-block;padding:10px 16px;background:#0066FF;color:#ffffff;text-decoration:none;border-radius:8px;">Verifikasi via Tautan</a>
         </p>
-        <p style="margin: 0 0 8px;">Atau gunakan token berikut dalam aplikasi:</p>
-        <pre style="background:#f3f4f6;padding:12px;border-radius:8px;">${token}</pre>
         <p style="font-size:12px;color:#6b7280;margin-top:16px;">Jika Anda tidak merasa mendaftar, abaikan email ini.</p>
       </div>
     `;

@@ -40,9 +40,8 @@ export class AuthController {
       // Hash password
       const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
-      // Generate email verification token
-      const emailVerificationToken = Math.random().toString(36).substring(2, 15) + 
-                                   Math.random().toString(36).substring(2, 15);
+      // Generate 6-digit numeric verification code
+      const emailVerificationToken = (Math.floor(100000 + Math.random() * 900000)).toString();
 
       // Create user
       const user = await this.prisma.user.create({
@@ -84,9 +83,15 @@ export class AuthController {
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     try {
-      // Find user by username
-      const user = await this.prisma.user.findUnique({
-        where: { username: loginDto.username }
+      // Support login with username OR email using a single identifier field
+      const identifier = (loginDto.username || '').trim();
+      const user = await this.prisma.user.findFirst({
+        where: {
+          OR: [
+            { username: identifier },
+            { email: identifier },
+          ],
+        },
       });
 
       if (!user) {
@@ -96,6 +101,11 @@ export class AuthController {
       // Check if user is active
       if (!user.isActive) {
         throw new UnauthorizedException('Akun Anda telah dinonaktifkan');
+      }
+
+      // If email verification is required, block login until verified
+      if (!user.emailVerified && process.env.NODE_ENV === 'production') {
+        throw new UnauthorizedException('Email belum diverifikasi');
       }
 
       // Verify password
@@ -196,9 +206,8 @@ export class AuthController {
         throw new ConflictException('Email sudah diverifikasi');
       }
 
-      // Generate new verification token
-      const emailVerificationToken = Math.random().toString(36).substring(2, 15) + 
-                                   Math.random().toString(36).substring(2, 15);
+      // Generate new 6-digit numeric verification code
+      const emailVerificationToken = (Math.floor(100000 + Math.random() * 900000)).toString();
 
       await this.prisma.user.update({
         where: { id: user.id },
