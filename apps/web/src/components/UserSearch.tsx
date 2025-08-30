@@ -24,9 +24,9 @@ const UserSearch: React.FC<UserSearchProps> = ({ onStartChat }) => {
   const mockUsers: User[] = [
     { id: 'user1', username: 'user1', email: 'user1@setaradapps.com', online: true },
     { id: 'user2', username: 'user2', email: 'user2@setaradapps.com', online: true },
-    { id: '3', username: 'alice_setara', email: 'alice@setara.id', online: false },
-    { id: '4', username: 'bob_smith', email: 'bob@setara.id', online: true },
-    { id: '5', username: 'charlie_brown', email: 'charlie@setara.id', online: false },
+    { id: '3', username: 'alice_setara', email: 'alice@setaradapps.com', online: false },
+    { id: '4', username: 'bob_smith', email: 'bob@setaradapps.com', online: true },
+    { id: '5', username: 'charlie_brown', email: 'charlie@setaradapps.com', online: false },
   ]
 
   const handleSearch = async (query: string) => {

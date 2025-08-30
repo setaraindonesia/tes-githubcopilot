@@ -104,6 +104,8 @@ const Dashboard: FC = () => {
   const [showBusinessMenu, setShowBusinessMenu] = useState(false)
   const [showSettingsMainMenu, setShowSettingsMainMenu] = useState(false)
   const [showHelpMenu, setShowHelpMenu] = useState(false)
+  const [userProfile, setUserProfile] = useState<any>(null)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
   const malangCenter: LatLngLiteral = { lat: -7.9819, lng: 112.6304 }
   const [isResolvingPickup, setIsResolvingPickup] = useState(false)
   const [isResolvingDest, setIsResolvingDest] = useState(false)
@@ -252,6 +254,32 @@ const Dashboard: FC = () => {
 
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null)
 
+  // Load user profile from API
+  const loadProfile = async (token: string) => {
+    setIsLoadingProfile(true)
+    try {
+      const response = await fetch('/api/auth/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        cache: 'no-store'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setUserProfile(data.user)
+        setCurrentUser(data.user)
+      } else {
+        console.error('Failed to load profile:', response.statusText)
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error)
+    } finally {
+      setIsLoadingProfile(false)
+    }
+  }
+
   useEffect(() => {
     if (typeof window === 'undefined') return
     
@@ -259,15 +287,20 @@ const Dashboard: FC = () => {
     const token = localStorage.getItem('token')
     const user = localStorage.getItem('user')
     
-    if (token && user) {
+    if (token) {
       setIsAuthed(true)
       setAuthToken(token)
-      // Set current user data for real-time chat
-      try {
-        const userData = JSON.parse(user)
-        setCurrentUser(userData)
-      } catch (error) {
-        console.error('Failed to parse user data:', error)
+      // Load fresh profile data from API
+      loadProfile(token)
+      
+      // Set current user data for real-time chat (fallback from localStorage)
+      if (user) {
+        try {
+          const userData = JSON.parse(user)
+          setCurrentUser(userData)
+        } catch (error) {
+          console.error('Failed to parse user data:', error)
+        }
       }
     } else {
       // Redirect to login if not authenticated
@@ -769,10 +802,16 @@ const Dashboard: FC = () => {
                     {/* User Info Header */}
                     <div className="px-4 py-3 bg-indigo-50 border-b border-indigo-100 rounded-t-xl">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold">A</div>
+                        <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                          {userProfile?.username ? userProfile.username.charAt(0).toUpperCase() : 'U'}
+                        </div>
                         <div>
-                          <div className="font-semibold text-gray-900">Ahmad Setara</div>
-                          <div className="text-xs text-gray-600">ahmad@setara.id</div>
+                          <div className="font-semibold text-gray-900">
+                            {userProfile?.username || 'User'}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {userProfile?.email || '(email belum dimuat)'}
+                          </div>
                         </div>
                       </div>
                     </div>
