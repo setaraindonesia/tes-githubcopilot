@@ -73,10 +73,18 @@ export default function Register() {
       const data = await response.json()
 
       if (response.ok) {
-        alert('Registrasi berhasil! Silakan cek email untuk verifikasi.')
-        router.push('/login')
+        // Redirect to registration status page with email
+        router.push(`/registration-status?email=${encodeURIComponent(formData.email)}`)
       } else {
-        if (data.field) {
+        // Handle specific error cases
+        if (data.message && data.message.includes('Email sudah terdaftar tapi belum diverifikasi')) {
+          // Email exists but not verified - redirect to status page
+          router.push(`/registration-status?email=${encodeURIComponent(formData.email)}`)
+        } else if (data.message && data.message.includes('Email sudah digunakan dan sudah diverifikasi')) {
+          // Email verified - redirect to login
+          alert('Email sudah terdaftar dan diverifikasi. Silakan login.')
+          router.push('/login')
+        } else if (data.field) {
           setErrors({ [data.field]: data.message })
         } else {
           alert(data.message || 'Terjadi kesalahan saat registrasi')

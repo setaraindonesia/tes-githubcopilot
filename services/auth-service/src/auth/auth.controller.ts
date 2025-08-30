@@ -34,7 +34,31 @@ export class AuthController {
       });
 
       if (existingUserByEmail) {
-        throw new ConflictException('Email sudah digunakan');
+        // If email not verified yet, allow resend verification
+        if (!existingUserByEmail.emailVerified) {
+          // Generate new OTP and resend
+          const emailVerificationToken = (Math.floor(100000 + Math.random() * 900000)).toString();
+          
+          await this.prisma.user.update({
+            where: { id: existingUserByEmail.id },
+            data: { emailVerificationToken }
+          });
+
+          // Send verification email
+          await this.emailService.sendVerificationEmail(existingUserByEmail.email, emailVerificationToken);
+
+          return {
+            message: 'Email sudah terdaftar tapi belum diverifikasi. Kode verifikasi baru telah dikirim ke email Anda.',
+            user: {
+              id: existingUserByEmail.id,
+              username: existingUserByEmail.username,
+              email: existingUserByEmail.email,
+              emailVerified: existingUserByEmail.emailVerified
+            }
+          };
+        } else {
+          throw new ConflictException('Email sudah digunakan dan sudah diverifikasi. Silakan login.');
+        }
       }
 
       // Hash password
