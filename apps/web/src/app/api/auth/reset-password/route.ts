@@ -3,17 +3,15 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { usernameOrEmail, password } = body
+    const { token, password, email } = body || {}
 
-    // Validation
-    if (!usernameOrEmail || !password) {
+    if (!token || !password) {
       return NextResponse.json(
-        { message: 'Username atau email dan password wajib diisi' },
+        { message: 'Token dan password wajib diisi' },
         { status: 400 }
       )
     }
 
-    // Proxy to Railway Auth Service
     const raw = process.env.NEXT_PUBLIC_AUTH_API_URL as string
     if (!raw) {
       return NextResponse.json(
@@ -24,41 +22,34 @@ export async function POST(request: NextRequest) {
 
     const base = raw.replace(/\/+$/, '')
     const authBase = base.endsWith('/api/v1') ? base : `${base}/api/v1`
+    const targetUrl = `${authBase}/auth/reset-password`
 
-    const targetUrl = `${authBase}/auth/login`
     const response = await fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usernameOrEmail, password })
+      body: JSON.stringify({ token, password, email })
     })
 
     const text = await response.text().catch(() => '')
     let data: any = {}
-    try {
-      data = text ? JSON.parse(text) : {}
-    } catch (_) {
-      data = { raw: text }
-    }
+    try { data = text ? JSON.parse(text) : {} } catch { data = { raw: text } }
 
     if (response.ok) {
-      return NextResponse.json({
-        message: data?.message || 'Login berhasil',
-        token: data?.token,
-        user: data?.user
-      })
+      return NextResponse.json({ message: data?.message || 'Password berhasil direset.' })
     }
 
     return NextResponse.json({
-      message: data?.message || 'Username atau password salah',
+      message: data?.message || 'Gagal reset password',
       upstreamStatus: response.status,
       target: targetUrl,
       raw: data?.raw
-    }, { status: response.status || 401 })
+    }, { status: response.status || 400 })
   } catch (error) {
-    console.error('Login error:', error)
     return NextResponse.json(
-      { message: 'Terjadi kesalahan saat login' },
+      { message: 'Terjadi kesalahan saat reset password' },
       { status: 500 }
     )
   }
 }
+
+

@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Get, Param, Put, UseGuards, HttpException, HttpStatus, ConflictException, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { EmailService } from '../email/email.service';
-import { RegisterDto, LoginDto, VerifyEmailDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, VerifyEmailDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import * as bcrypt from 'bcrypt';
@@ -249,6 +249,73 @@ export class AuthController {
         throw error;
       }
       throw new HttpException('Terjadi kesalahan saat mengirim email verifikasi', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    try {
+      const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+
+      // Selalu balas sukses untuk keamanan (tidak bocorkan email terdaftar/tidak)
+      if (!user) {
+        return { message: 'Jika email terdaftar, instruksi reset telah dikirim.' };
+      }
+
+      const token = (Math.floor(100000 + Math.random() * 900000)).toString();
+      const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 menit
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          passwordResetToken: token,
+          passwordResetExpires: expires,
+        }
+      });
+
+      await this.emailService.sendPasswordResetEmail(user.email, token);
+
+      return { message: 'Jika email terdaftar, instruksi reset telah dikirim.' };
+    } catch (error) {
+      throw new HttpException('Terjadi kesalahan saat permintaan reset password', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() dto: ResetPasswordDto & { email?: string }) {
+    try {
+      const user = await this.prisma.user.findFirst({
+        where: {
+          email: dto.email || undefined,
+          passwordResetToken: dto.token,
+          passwordResetExpires: { gt: new Date() },
+        }
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('Token reset tidak valid atau sudah kadaluarsa');
+      }
+
+      const hashed = await bcrypt.hash(dto.password, 10);
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          password: hashed,
+          passwordResetToken: null,
+          passwordResetExpires: null,
+        }
+      });
+
+      // Invalidate sessions
+      await this.prisma.session.deleteMany({ where: { userId: user.id } });
+
+      return { message: 'Password berhasil direset. Silakan login.' };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new HttpException('Terjadi kesalahan saat reset password', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

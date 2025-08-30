@@ -26,24 +26,16 @@ const HomePage: FC = () => {
               <Button 
                 variant="primary" 
                 size="lg"
-                onClick={() => {
-                  localStorage.setItem('auth', 'true');
-                  window.location.href = '/dashboard';
-                }}
                 className="cursor-pointer"
               >
-                🔐 Sign In
+                <a href="/login">Login</a>
               </Button>
               <Button 
                 variant="outline" 
                 size="lg"
-                onClick={() => {
-                  localStorage.setItem('auth', 'true');
-                  window.location.href = '/dashboard';
-                }}
                 className="cursor-pointer"
               >
-                📝 Daftar
+                <a href="/register">Daftar</a>
               </Button>
             </div>
             
@@ -207,13 +199,9 @@ const HomePage: FC = () => {
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => {
-                    localStorage.setItem('auth', 'true');
-                    window.location.href = '/dashboard';
-                  }}
                   className="cursor-pointer"
                 >
-                  View Demo
+                  <a href="/login">Login untuk Demo</a>
                 </Button>
               </div>
             </Card>

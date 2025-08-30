@@ -46,27 +46,7 @@ const Navigation = () => {
             </div>
           </div>
 
-          {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
-            <button 
-              onClick={() => {
-                localStorage.setItem('auth', 'true');
-                window.location.href = '/dashboard';
-              }}
-              className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer"
-            >
-              🔐 Sign In
-            </button>
-            <button 
-              onClick={() => {
-                localStorage.setItem('auth', 'true');
-                window.location.href = '/dashboard';
-              }}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm cursor-pointer"
-            >
-              📝 Get Started
-            </button>
-          </div>
+          {/* Desktop Auth Buttons removed to avoid duplicate CTAs; use nav links instead */}
 
           {/* Mobile menu button */}
           <div className="md:hidden">
@@ -102,24 +82,18 @@ const Navigation = () => {
                 Contact
               </a>
               <div className="pt-4 pb-3 border-t border-gray-200">
-                <button 
-                  onClick={() => {
-                    localStorage.setItem('auth', 'true');
-                    window.location.href = '/dashboard';
-                  }}
-                  className="text-gray-700 hover:text-indigo-600 block px-3 py-2 rounded-md text-base font-medium w-full text-left cursor-pointer"
+                <a 
+                  href="/login"
+                  className="text-gray-700 hover:text-indigo-600 block px-3 py-2 rounded-md text-base font-medium"
                 >
-                  🔐 Sign In
-                </button>
-                <button 
-                  onClick={() => {
-                    localStorage.setItem('auth', 'true');
-                    window.location.href = '/dashboard';
-                  }}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left mt-2 cursor-pointer"
+                  Login
+                </a>
+                <a 
+                  href="/register"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white block px-3 py-2 rounded-md text-base font-medium mt-2"
                 >
-                  📝 Get Started
-                </button>
+                  Daftar
+                </a>
               </div>
             </div>
           </div>

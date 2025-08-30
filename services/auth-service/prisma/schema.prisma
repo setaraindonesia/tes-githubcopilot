@@ -23,6 +23,8 @@ model User {
   isVerified Boolean @default(false)
   emailVerified Boolean @default(false)
   emailVerificationToken String?
+  passwordResetToken String?
+  passwordResetExpires DateTime?
   role      UserRole @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

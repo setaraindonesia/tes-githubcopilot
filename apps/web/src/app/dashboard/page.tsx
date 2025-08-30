@@ -451,12 +451,12 @@ const Dashboard: FC = () => {
         <div className="bg-white p-6 rounded-lg shadow border w-full max-w-sm text-center">
           <h2 className="text-lg font-semibold text-gray-900 mb-2">Silakan Masuk</h2>
           <p className="text-sm text-gray-600 mb-4">Untuk mengakses dashboard, klik tombol di bawah.</p>
-          <button
-            onClick={() => { localStorage.setItem('auth', 'true'); window.location.href = '/dashboard' }}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer"
+          <a
+            href="/login"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors inline-flex items-center justify-center"
           >
-            🔐 Sign In
-          </button>
+            Login
+          </a>
         </div>
       </div>
     )

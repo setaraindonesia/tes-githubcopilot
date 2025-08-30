@@ -42,15 +42,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Proxy ke Auth Service di Railway
-    const authServiceUrl = process.env.NEXT_PUBLIC_AUTH_API_URL as string
-    if (!authServiceUrl) {
+    const raw = process.env.NEXT_PUBLIC_AUTH_API_URL as string
+    if (!raw) {
       return NextResponse.json(
         { message: 'Auth service URL tidak dikonfigurasi' },
         { status: 500 }
       )
     }
 
-    const response = await fetch(`${authServiceUrl}/auth/register`, {
+    const base = raw.replace(/\/+$/, '')
+    const authBase = base.endsWith('/api/v1') ? base : `${base}/api/v1`
+
+    const response = await fetch(`${authBase}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, email, password })

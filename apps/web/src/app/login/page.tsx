@@ -7,7 +7,7 @@ import Link from 'next/link'
 export default function Login() {
   const router = useRouter()
   const [credentials, setCredentials] = useState({
-    username: '',
+    usernameOrEmail: '',
     password: ''
   })
   const [isLoading, setIsLoading] = useState(false)
@@ -17,8 +17,8 @@ export default function Login() {
     e.preventDefault()
     setError('')
     
-    if (!credentials.username || !credentials.password) {
-      setError('Username dan password wajib diisi')
+    if (!credentials.usernameOrEmail || !credentials.password) {
+      setError('Username atau email dan password wajib diisi')
       return
     }
 
@@ -60,7 +60,7 @@ export default function Login() {
             Login ke Akun Anda
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Masukkan username dan password untuk mengakses dashboard
+            Masukkan username atau email dan password untuk mengakses dashboard
           </p>
         </div>
       </div>
@@ -75,22 +75,23 @@ export default function Login() {
               </div>
             )}
 
-            {/* Username Field */}
+            {/* Username or Email Field */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username
+              <label htmlFor="usernameOrEmail" className="block text-sm font-medium text-gray-700">
+                Username atau Email
               </label>
               <div className="mt-1">
                 <input
-                  id="username"
-                  name="username"
+                  id="usernameOrEmail"
+                  name="usernameOrEmail"
                   type="text"
-                  value={credentials.username}
-                  onChange={(e) => setCredentials({...credentials, username: e.target.value})}
-                  placeholder="masukkan_username"
+                  value={credentials.usernameOrEmail}
+                  onChange={(e) => setCredentials({...credentials, usernameOrEmail: e.target.value})}
+                  placeholder="username atau email@domain.com"
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
               </div>
+              <p className="mt-1 text-xs text-gray-500">Anda bisa login dengan username atau alamat email</p>
             </div>
 
             {/* Password Field */}
